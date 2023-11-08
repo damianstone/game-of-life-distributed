@@ -1,11 +1,10 @@
 package gol
 
 import (
-	"flag"
 	"fmt"
 	"net/rpc"
 	"os"
-	"uk.ac.bris.cs/gameoflife/gol/schema"
+	"uk.ac.bris.cs/gameoflife/schema"
 )
 
 type distributorChannels struct {
@@ -17,46 +16,46 @@ type distributorChannels struct {
 	ioInput    <-chan uint8
 }
 
-func controller() {
-	server := flag.String("server", "127.0.0.1:8030", "IP:port string to connect to as server")
-	flag.Parse()
-	fmt.Println("Server: ", *server)
+func callWorkerEndpoint(client *rpc.Client, p Params, initialWorld [][]uint8) *schema.Response {
+	// schemas
+	request := schema.Request{
+		Message:      "some message",
+		InitialWorld: initialWorld,
+		Turns:        p.Turns,
+		ImageWidth:   p.ImageWidth,
+		ImageHeight:  p.ImageHeight,
+	}
+	response := new(schema.Response)
 
+	// request to the server
+	callError := client.Call(schema.HandleWorker, request, response)
+
+	if callError != nil {
+		fmt.Println("Something when wrong in the request", callError)
+		os.Exit(1)
+	}
+
+	return response
+}
+
+func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint8) [][]uint8 {
+	
 	// create a client
-	client, err := rpc.Dial("tcp", *server)
+	client, err := rpc.Dial("tcp", "127.0.0.1:8030")
 
 	// check for errors
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 	// close the client
-	defer func(client *rpc.Client) {
-		err := client.Close()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}(client)
+	defer client.Close()
 
-	// create a request
-	request := schema.Request{Message: "level"}
-	response := new(schema.Response)
-	callError := client.Call(schema.HandleWorker, request, response)
+	response := callWorkerEndpoint(client, p, initialWorld)
 
-	if callError != nil {
-		fmt.Println("Something when wrong in the request", err)
-		os.Exit(1)
-	}
-	fmt.Println("Responded: " + response.Status)
-}
+	fmt.Println("Response status --> : " + response.Status)
 
-func gameOfLife(p Params, initialWorld [][]uint8) [][]uint8 {
-	world := initialWorld
-	for turn := 0; turn < p.Turns; turn++ {
-		world = calculateNextState(p, world)
-	}
-	return world
+	return response.World
 }
 
 // distributor divides the work between workers and interacts with other goroutines.
@@ -70,7 +69,7 @@ func distributor(p Params, c distributorChannels) {
 	initialWorld := getImage(p, c, worldSlice)
 
 	// TODO: Execute all turns of the Game of Life.
-	finalWorld := gameOfLife(p, initialWorld)
+	finalWorld := gameOfLifeController(p, c, initialWorld)
 
 	// TODO: Report the final state using FinalTurnCompleteEvent.
 	aliveCells := calculateAliveCells(p, finalWorld)

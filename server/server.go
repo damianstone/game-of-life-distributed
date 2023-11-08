@@ -1,4 +1,4 @@
-package gol
+package main
 
 import (
 	"flag"
@@ -7,16 +7,25 @@ import (
 	"net"
 	"net/rpc"
 	"time"
-	"uk.ac.bris.cs/gameoflife/gol/schema"
+	"uk.ac.bris.cs/gameoflife/schema"
+	"uk.ac.bris.cs/gameoflife/server/utils"
 )
+
+// 8:32
 
 type GameOfLifeOperations struct{}
 
-func (s *GameOfLifeOperations) Worker(request schema.Request, response schema.Response) (err error) {
-	// number of iterations in turns
+// Worker is the function that will be called by the client
+// This function implement the logic of the game of life
+func (s *GameOfLifeOperations) Worker(request schema.Request, response *schema.Response) (err error) {
+	world := request.InitialWorld
+	for turn := 0; turn < request.Turns; turn++ {
+		world = utils.CalculateNextState(world)
+	}
 
-	// use the calculate next state function
-	return
+	response.Status = "OK"
+	response.World = world
+	return err
 }
 
 func main() {
