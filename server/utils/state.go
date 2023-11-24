@@ -1,5 +1,7 @@
 package utils
 
+import "uk.ac.bris.cs/gameoflife/util"
+
 func countLiveNeighbours(i int, j int, world [][]uint8) int {
 	// 8 potential neighbours per cell
 	neighborOffsets := [8][2]int{
@@ -70,4 +72,16 @@ func CalculateNextState(currentWorld [][]uint8) [][]uint8 {
 	}
 
 	return nextWorld
+}
+
+func CountAliveCells(world [][]uint8) int {
+	var cells []util.Cell
+	for i := range world {
+		for j := range world[i] {
+			if world[i][j] == 255 {
+				cells = append(cells, util.Cell{X: j, Y: i})
+			}
+		}
+	}
+	return len(cells)
 }

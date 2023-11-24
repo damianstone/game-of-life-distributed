@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/rpc"
 	"os"
+	"strconv"
 	"time"
 	"uk.ac.bris.cs/gameoflife/schema"
 	"uk.ac.bris.cs/gameoflife/util"
@@ -19,10 +20,39 @@ type distributorChannels struct {
 	ioKeyPress <-chan rune
 }
 
-func callWorkerEndpoint(client *rpc.Client, p Params, world [][]uint8) *schema.Response {
-	// schemas
+func handleSdlEvents(p Params, turn int, c distributorChannels, key string, world [][]uint8) {
+	switch key {
+	// terminate the program
+	case "q":
+		writeImage(p, c, turn, world)
+		c.events <- StateChange{CompletedTurns: turn, NewState: Quitting}
+		close(c.events)
+		os.Exit(0)
+	// generate a PGM file with the current state of the board
+	case "s":
+		writeImage(p, c, turn, world)
+	// pause the execution
+	case "p":
+		c.events <- StateChange{CompletedTurns: turn, NewState: Paused}
+		fmt.Println("Turn" + strconv.Itoa(p.Turns))
+		for {
+			if <-c.ioKeyPress == 'p' {
+				c.events <- StateChange{turn, Executing}
+				fmt.Println("Continuing")
+				break
+			}
+		}
+	default:
+		fmt.Println("Invalid key")
+	}
+}
+
+func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint8) [][]uint8 {
+	ticker := time.NewTicker(2 * time.Second)
+	client, _ := rpc.Dial("tcp", "127.0.0.1:8030")
+	defer client.Close()
 	request := schema.Request{
-		World: world,
+		World: initialWorld,
 		Params: schema.Params{
 			Turns:       p.Turns,
 			Threads:     p.Threads,
@@ -30,51 +60,27 @@ func callWorkerEndpoint(client *rpc.Client, p Params, world [][]uint8) *schema.R
 			ImageHeight: p.ImageHeight,
 		},
 	}
-
 	response := new(schema.Response)
+	done := client.Go(schema.BrokerHandler, request, response, nil)
 
-	// request to the server
-	callError := client.Call(schema.BrokerHandler, request, response)
-
-	if callError != nil {
-		fmt.Println("Something when wrong in the request: callWorkerEndpoint -> ", callError)
-		os.Exit(1)
-	}
-
-	return response
-}
-
-func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint8) [][]uint8 {
-	client, _ := rpc.Dial("tcp", "127.0.0.1:8030")
-	defer client.Close()
-
-	turn := 0
-	currentWorld := initialWorld
-	// ticker to send events every 2 seconds
-	ticker := time.NewTicker(2 * time.Second)
-
-	for turn < p.Turns {
-
+	for {
 		select {
+		case <-done.Done:
+			return response.World
 		case <-ticker.C:
-			currentAliveCells := calculateAliveCells(currentWorld)
-			c.events <- AliveCellsCount{CompletedTurns: turn, CellsCount: len(currentAliveCells)}
+			request := schema.BlakRequest{}
+			response := new(schema.CurrentStateResponse)
+			err := client.Call(schema.GetCurrentState, request, response)
+			if err != nil {
+				fmt.Println("Error GetCurrentState -> ", err)
+				os.Exit(1)
+			}
+			c.events <- AliveCellsCount{CompletedTurns: response.Turn, CellsCount: response.AliveCellsCount}
 		case key := <-c.ioKeyPress:
 			handleSdlEvents(p, turn, c, string(key), currentWorld)
-		default:
-
-			response := callWorkerEndpoint(client, p, currentWorld)
-			updatedWorld := response.World
-
-			// compare which cells have changed and send CellFlipped events
-			compareAndSendCellFlippedEvents(c, turn, currentWorld, updatedWorld)
-			currentWorld = updatedWorld
-			c.events <- TurnComplete{CompletedTurns: turn}
-			turn++
 		}
 	}
 
-	return currentWorld
 }
 
 // distributor divides the work between workers and interacts with other goroutines.
@@ -83,6 +89,7 @@ func distributor(p Params, c distributorChannels) {
 	// TODO: Create a 2D slice to store the world.
 	worldSlice := createWorld(p.ImageHeight, p.ImageWidth)
 	initialWorld := getImage(p, c, worldSlice)
+
 	//send CellFlipped for all cells that are alive when the image is loaded in
 	for i := range initialWorld {
 		for j := range initialWorld[i] {

@@ -1,8 +1,6 @@
 package gol
 
 import (
-	"fmt"
-	"os"
 	"strconv"
 	"uk.ac.bris.cs/gameoflife/util"
 )
@@ -75,32 +73,4 @@ func compareAndSendCellFlippedEvents(c distributorChannels, turn int, currentWor
 			}
 		}
 	}
-}
-
-func handleSdlEvents(p Params, turn int, c distributorChannels, key string, world [][]uint8) {
-	switch key {
-	// terminate the program
-	case "q":
-		writeImage(p, c, turn, world)
-		c.events <- StateChange{CompletedTurns: turn, NewState: Quitting}
-		close(c.events)
-		os.Exit(0)
-	// generate a PGM file with the current state of the board
-	case "s":
-		writeImage(p, c, turn, world)
-	// pause the execution
-	case "p":
-		c.events <- StateChange{CompletedTurns: turn, NewState: Paused}
-		fmt.Println("Turn" + strconv.Itoa(p.Turns))
-		for {
-			if <-c.ioKeyPress == 'p' {
-				c.events <- StateChange{turn, Executing}
-				fmt.Println("Continuing")
-				break
-			}
-		}
-	default:
-		fmt.Println("Invalid key")
-	}
-
 }
