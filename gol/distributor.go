@@ -19,19 +19,22 @@ type distributorChannels struct {
 	ioKeyPress <-chan rune
 }
 
-func callWorkerEndpoint(client *rpc.Client, p Params, initialWorld [][]uint8) *schema.Response {
+func callWorkerEndpoint(client *rpc.Client, p Params, world [][]uint8) *schema.Response {
 	// schemas
 	request := schema.Request{
-		Message:      "some message",
-		InitialWorld: initialWorld,
-		Turns:        p.Turns,
-		ImageWidth:   p.ImageWidth,
-		ImageHeight:  p.ImageHeight,
+		World: world,
+		Params: schema.Params{
+			Turns:       p.Turns,
+			Threads:     p.Threads,
+			ImageWidth:  p.ImageWidth,
+			ImageHeight: p.ImageHeight,
+		},
 	}
+
 	response := new(schema.Response)
 
 	// request to the server
-	callError := client.Call(schema.HandleWorker, request, response)
+	callError := client.Call(schema.BrokerHandler, request, response)
 
 	if callError != nil {
 		fmt.Println("Something when wrong in the request: callWorkerEndpoint -> ", callError)
@@ -41,33 +44,37 @@ func callWorkerEndpoint(client *rpc.Client, p Params, initialWorld [][]uint8) *s
 	return response
 }
 
-func getAliveCellsEndpoint(client *rpc.Client, p Params, initialWorld [][]uint8) int {
-	return 0
-}
-
 func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint8) [][]uint8 {
-	finalWorld := createWorld(p.ImageHeight, p.ImageWidth)
-	ticker := time.NewTicker(2 * time.Second)
-	client, err := rpc.Dial("tcp", "127.0.0.1:8030")
-	if err != nil {
-		fmt.Println("Something when wrong when trying to connect to the server at port: 8030 ", err)
-		os.Exit(1)
-	}
+	client, _ := rpc.Dial("tcp", "127.0.0.1:8030")
 	defer client.Close()
-	
-	select {
-	case <-ticker.C:
-		currentAliveCells := calculateAliveCells(p, finalWorld)
-		c.events <- AliveCellsCount{p.Turns, len(currentAliveCells)}
-	case key := <-c.ioKeyPress:
-		handleSdlEvents(p, p.Turns, c, string(key), finalWorld)
-	default:
-		response := callWorkerEndpoint(client, p, initialWorld)
-		fmt.Println("Response status --> : " + response.Status)
-		finalWorld = response.World
-	}
-	return finalWorld
 
+	turn := 0
+	currentWorld := initialWorld
+	// ticker to send events every 2 seconds
+	ticker := time.NewTicker(2 * time.Second)
+
+	for turn < p.Turns {
+
+		select {
+		case <-ticker.C:
+			currentAliveCells := calculateAliveCells(currentWorld)
+			c.events <- AliveCellsCount{CompletedTurns: turn, CellsCount: len(currentAliveCells)}
+		case key := <-c.ioKeyPress:
+			handleSdlEvents(p, turn, c, string(key), currentWorld)
+		default:
+
+			response := callWorkerEndpoint(client, p, currentWorld)
+			updatedWorld := response.World
+
+			// compare which cells have changed and send CellFlipped events
+			compareAndSendCellFlippedEvents(c, turn, currentWorld, updatedWorld)
+			currentWorld = updatedWorld
+			c.events <- TurnComplete{CompletedTurns: turn}
+			turn++
+		}
+	}
+
+	return currentWorld
 }
 
 // distributor divides the work between workers and interacts with other goroutines.
@@ -89,7 +96,7 @@ func distributor(p Params, c distributorChannels) {
 	finalWorld := gameOfLifeController(p, c, initialWorld)
 
 	// TODO: Report the final state using FinalTurnCompleteEvent.
-	aliveCells := calculateAliveCells(p, finalWorld)
+	aliveCells := calculateAliveCells(finalWorld)
 	c.events <- FinalTurnComplete{CompletedTurns: p.Turns, Alive: aliveCells}
 	writeImage(p, c, p.Turns, finalWorld)
 

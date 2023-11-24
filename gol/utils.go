@@ -55,7 +55,7 @@ func getImage(p Params, c distributorChannels, world [][]uint8) [][]uint8 {
 	return world
 }
 
-func calculateAliveCells(p Params, world [][]uint8) []util.Cell {
+func calculateAliveCells(world [][]uint8) []util.Cell {
 	var cells []util.Cell
 	for i := range world {
 		for j := range world[i] {
@@ -65,6 +65,16 @@ func calculateAliveCells(p Params, world [][]uint8) []util.Cell {
 		}
 	}
 	return cells
+}
+
+func compareAndSendCellFlippedEvents(c distributorChannels, turn int, currentWorld, updatedWorld [][]uint8) {
+	for i := range currentWorld {
+		for j := range currentWorld[i] {
+			if currentWorld[i][j] != updatedWorld[i][j] {
+				c.events <- CellFlipped{CompletedTurns: turn, Cell: util.Cell{X: j, Y: i}}
+			}
+		}
+	}
 }
 
 func handleSdlEvents(p Params, turn int, c distributorChannels, key string, world [][]uint8) {

@@ -32,6 +32,14 @@ func countLiveNeighbours(i int, j int, world [][]uint8) int {
 	return liveNeighbours
 }
 
+func CreateWorld(height int, width int) [][]uint8 {
+	world := make([][]uint8, height)
+	for i := range world {
+		world[i] = make([]uint8, width)
+	}
+	return world
+}
+
 func CalculateNextState(currentWorld [][]uint8) [][]uint8 {
 
 	nextWorld := make([][]uint8, len(currentWorld))

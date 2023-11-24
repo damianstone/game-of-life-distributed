@@ -1,8 +1,15 @@
 package schema
 
-var HandleWorker = "GameOfLifeOperations.Worker"
+var BrokerHandler = "Broker.BrokerHandler"
 
 // Structured data types for communication between the client and the server
+
+type Params struct {
+	Turns       int
+	Threads     int
+	ImageWidth  int
+	ImageHeight int
+}
 
 type Response struct {
 	Status string
@@ -10,9 +17,6 @@ type Response struct {
 }
 
 type Request struct {
-	Message      string
-	InitialWorld [][]uint8
-	Turns        int
-	ImageWidth   int
-	ImageHeight  int
+	World  [][]uint8
+	Params Params
 }
