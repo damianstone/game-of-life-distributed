@@ -2,6 +2,8 @@ package schema
 
 var BrokerHandler = "Broker.HandleBroker"
 var GetCurrentState = "Broker.GetCurrentState"
+var HandleKey = "Broker.HandleKey"
+var GetTurnSignal = "Broker.GetTurnSignal"
 
 // Structured data types for communication between the client and the server
 
@@ -17,14 +19,25 @@ type Response struct {
 	World  [][]uint8
 }
 
-type BlakRequest struct{}
+type BlankRequest struct{}
 
 type CurrentStateResponse struct {
 	AliveCellsCount int
+	CurrentWorld    [][]uint8
 	Turn            int
 }
 
 type Request struct {
 	World  [][]uint8
 	Params Params
+}
+
+type KeyRequest struct {
+	Key string
+}
+
+type TurnSignal struct {
+	Turn         int
+	CurrentWorld [][]uint8
+	OldWorld     [][]uint8
 }

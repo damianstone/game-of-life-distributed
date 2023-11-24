@@ -11,43 +11,30 @@ import (
 )
 
 type distributorChannels struct {
-	events     chan<- Event
-	ioCommand  chan<- ioCommand
-	ioIdle     <-chan bool
-	ioFilename chan<- string
-	ioOutput   chan<- uint8
-	ioInput    <-chan uint8
-	ioKeyPress <-chan rune
+	events       chan<- Event
+	ioCommand    chan<- ioCommand
+	ioIdle       <-chan bool
+	ioFilename   chan<- string
+	ioOutput     chan<- uint8
+	ioInput      <-chan uint8
+	ioKeyPress   <-chan rune
+	signalStream <-chan schema.TurnSignal
 }
 
-func handleSdlEvents(p Params, turn int, c distributorChannels, key string, world [][]uint8) {
-	switch key {
-	// terminate the program
-	case "q":
-		writeImage(p, c, turn, world)
-		c.events <- StateChange{CompletedTurns: turn, NewState: Quitting}
-		close(c.events)
-		os.Exit(0)
-	// generate a PGM file with the current state of the board
-	case "s":
-		writeImage(p, c, turn, world)
-	// pause the execution
-	case "p":
-		c.events <- StateChange{CompletedTurns: turn, NewState: Paused}
-		fmt.Println("Turn" + strconv.Itoa(p.Turns))
-		for {
-			if <-c.ioKeyPress == 'p' {
-				c.events <- StateChange{turn, Executing}
-				fmt.Println("Continuing")
-				break
-			}
+func receiveSignalsFromServer(client *rpc.Client, signalStream chan<- schema.TurnSignal) {
+	for {
+		var signal schema.TurnSignal
+		if err := client.Call(schema.GetTurnSignal, schema.BlankRequest{}, &signal); err != nil {
+			fmt.Println("Error receiving signal from server:", err)
+			break
 		}
-	default:
-		fmt.Println("Invalid key")
+		signalStream <- signal
 	}
 }
 
 func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint8) [][]uint8 {
+	//currentWorld := initialWorld
+	//turn := 0
 	ticker := time.NewTicker(2 * time.Second)
 	client, _ := rpc.Dial("tcp", "127.0.0.1:8030")
 	defer client.Close()
@@ -62,13 +49,18 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 	}
 	response := new(schema.Response)
 	done := client.Go(schema.BrokerHandler, request, response, nil)
+	//signalStream := make(chan schema.TurnSignal)
+	//go receiveSignalsFromServer(client, signalStream)
 
 	for {
 		select {
+		//case signal := <-signalStream:
+		//	compareAndSendCellFlippedEvents(c, signal.Turn, signal.OldWorld, signal.CurrentWorld)
+		//	c.events <- TurnComplete{CompletedTurns: signal.Turn}
 		case <-done.Done:
 			return response.World
 		case <-ticker.C:
-			request := schema.BlakRequest{}
+			request := schema.BlankRequest{}
 			response := new(schema.CurrentStateResponse)
 			err := client.Call(schema.GetCurrentState, request, response)
 			if err != nil {
@@ -76,8 +68,68 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				os.Exit(1)
 			}
 			c.events <- AliveCellsCount{CompletedTurns: response.Turn, CellsCount: response.AliveCellsCount}
+
 		case key := <-c.ioKeyPress:
-			handleSdlEvents(p, turn, c, string(key), currentWorld)
+			switch string(key) {
+
+			case "s":
+				request := schema.BlankRequest{}
+				response := new(schema.CurrentStateResponse)
+				err := client.Call(schema.GetCurrentState, request, response)
+				if err != nil {
+					fmt.Println("Error GetCurrentState -> ", err)
+					os.Exit(1)
+				}
+				writeImage(p, c, response.Turn, response.CurrentWorld)
+
+			case "q":
+				request := schema.BlankRequest{}
+				response := new(schema.CurrentStateResponse)
+				err := client.Call(schema.GetCurrentState, request, response)
+				if err != nil {
+					fmt.Println("Error GetCurrentState -> ", err)
+					os.Exit(1)
+				}
+				writeImage(p, c, response.Turn, response.CurrentWorld)
+				c.events <- StateChange{CompletedTurns: 0, NewState: Quitting}
+				close(c.events)
+				os.Exit(0)
+
+			case "k":
+				// save the last state
+				request := schema.KeyRequest{Key: "k"}
+				response := new(schema.CurrentStateResponse)
+				errState := client.Call(schema.GetCurrentState, request, response)
+				if errState != nil {
+					fmt.Println("Error HandleKey -> ", errState)
+					os.Exit(1)
+				}
+				lastTurn := response.Turn
+				writeImage(p, c, lastTurn, response.CurrentWorld)
+
+				// shut down the server
+				request = schema.KeyRequest{Key: "q"}
+				response = new(schema.CurrentStateResponse)
+				errShutDown := client.Call(schema.HandleKey, request, response)
+				if errShutDown != nil {
+					fmt.Println("Error HandleKey -> ", errShutDown)
+					os.Exit(1)
+				}
+				c.events <- StateChange{CompletedTurns: lastTurn, NewState: Quitting}
+
+			case "p":
+				c.events <- StateChange{CompletedTurns: 0, NewState: Paused}
+				fmt.Println("Turn" + strconv.Itoa(p.Turns))
+				for {
+					if <-c.ioKeyPress == 'p' {
+						c.events <- StateChange{0, Executing}
+						fmt.Println("Continuing")
+						break
+					}
+				}
+			default:
+				fmt.Println("Invalid key")
+			}
 		}
 	}
 

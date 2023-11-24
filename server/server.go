@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net"
 	"net/rpc"
+	"os"
 	"sync"
 	"time"
 	"uk.ac.bris.cs/gameoflife/schema"
@@ -15,6 +16,8 @@ import (
 var world [][]uint8
 var mutex sync.Mutex
 var turn int
+var shutdownFlag bool
+var turnSignalChannel = make(chan schema.TurnSignal)
 
 type Broker struct{}
 
@@ -24,8 +27,10 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 	world = request.World
 	for turn = 0; turn < request.Params.Turns; {
 		mutex.Lock()
+		//oldWorld := world
 		world = utils.CalculateNextState(world)
 		turn++
+		//turnSignalChannel <- schema.TurnSignal{Turn: turn, CurrentWorld: world, OldWorld: oldWorld}
 		mutex.Unlock()
 	}
 	response.Status = "OK"
@@ -33,11 +38,32 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 	return err
 }
 
+// GetTurnSignal is a method to get the current turn signal
+func (b *Broker) GetTurnSignal(request schema.BlankRequest, response *schema.TurnSignal) (err error) {
+	*response = <-turnSignalChannel
+	return err
+}
+
 func (b *Broker) GetCurrentState(request schema.Request, response *schema.CurrentStateResponse) (err error) {
 	mutex.Lock()
 	defer mutex.Unlock()
+	response.CurrentWorld = world
 	response.AliveCellsCount = utils.CountAliveCells(world)
 	response.Turn = turn
+	return err
+}
+
+func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentStateResponse) (err error) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	switch string(request.Key) {
+	case "q":
+
+	case "k":
+		shutdownFlag = true
+	case "p":
+	}
+
 	return err
 }
 
@@ -61,6 +87,20 @@ func main() {
 
 		}
 	}(listener)
+
+	// goroutine to handle server shutdown
+	go func() {
+		for {
+			time.Sleep(100 * time.Millisecond)
+			mutex.Lock()
+			if shutdownFlag {
+				mutex.Unlock()
+				fmt.Println("Shutting down the server...")
+				os.Exit(0)
+			}
+			mutex.Unlock()
+		}
+	}()
 
 	// make the server start accepting communication
 	rpc.Accept(listener)
