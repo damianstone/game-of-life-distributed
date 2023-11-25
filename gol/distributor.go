@@ -95,6 +95,21 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				writeImage(p, c, response.Turn, response.CurrentWorld)
 				c.events <- StateChange{CompletedTurns: response.Turn, NewState: Quitting}
 				close(c.events)
+
+				// wait for server to restart before exiting the client
+				restartServer := make(chan struct{})
+				go func() {
+					shutDownRequest := schema.KeyRequest{Key: "q"}
+					shutDownResponse := new(schema.CurrentStateResponse)
+					errShutDown := client.Call(schema.HandleKey, shutDownRequest, shutDownResponse)
+					if errShutDown != nil {
+						fmt.Println("Error HandleKey -> ", errShutDown)
+						os.Exit(1)
+					}
+					close(restartServer)
+				}()
+				<-restartServer
+
 				os.Exit(0)
 
 			case "k":
