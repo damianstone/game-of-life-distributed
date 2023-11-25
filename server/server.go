@@ -19,8 +19,6 @@ var turn int
 var shutdownFlag bool
 var pauseFlag bool
 
-//var turnSignalChannel = make(chan schema.TurnSignal)
-
 type Broker struct{}
 
 // HandleBroker is the function that will be called by the client
@@ -29,10 +27,8 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 	world = request.World
 	for turn = 0; turn < request.Params.Turns; {
 		mutex.Lock()
-		//oldWorld := world
 		world = utils.CalculateNextState(world)
 		turn++
-		//turnSignalChannel <- schema.TurnSignal{Turn: turn, CurrentWorld: world, OldWorld: oldWorld}
 		mutex.Unlock()
 
 		// check for pause flag and wait if set
@@ -44,12 +40,6 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 	response.World = world
 	return err
 }
-
-// GetTurnSignal is a method to get the current turn signal
-//func (b *Broker) GetTurnSignal(request schema.BlankRequest, response *schema.TurnSignal) (err error) {
-//	*response = <-turnSignalChannel
-//	return err
-//}
 
 func (b *Broker) GetCurrentState(request schema.Request, response *schema.CurrentStateResponse) (err error) {
 	mutex.Lock()

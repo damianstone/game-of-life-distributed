@@ -3,7 +3,6 @@ package schema
 var BrokerHandler = "Broker.HandleBroker"
 var GetCurrentState = "Broker.GetCurrentState"
 var HandleKey = "Broker.HandleKey"
-var GetTurnSignal = "Broker.GetTurnSignal"
 
 // Structured data types for communication between the client and the server
 
@@ -34,10 +33,4 @@ type Request struct {
 
 type KeyRequest struct {
 	Key string
-}
-
-type TurnSignal struct {
-	Turn         int
-	CurrentWorld [][]uint8
-	OldWorld     [][]uint8
 }

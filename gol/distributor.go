@@ -21,20 +21,7 @@ type distributorChannels struct {
 	signalStream <-chan schema.TurnSignal
 }
 
-func receiveSignalsFromServer(client *rpc.Client, signalStream chan<- schema.TurnSignal) {
-	for {
-		var signal schema.TurnSignal
-		if err := client.Call(schema.GetTurnSignal, schema.BlankRequest{}, &signal); err != nil {
-			fmt.Println("Error receiving signal from server:", err)
-			break
-		}
-		signalStream <- signal
-	}
-}
-
 func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint8) [][]uint8 {
-	//currentWorld := initialWorld
-	//turn := 0
 	ticker := time.NewTicker(2 * time.Second)
 	client, _ := rpc.Dial("tcp", "127.0.0.1:8030")
 	defer client.Close()
@@ -49,14 +36,9 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 	}
 	response := new(schema.Response)
 	done := client.Go(schema.BrokerHandler, request, response, nil)
-	//signalStream := make(chan schema.TurnSignal)
-	//go receiveSignalsFromServer(client, signalStream)
 
 	for {
 		select {
-		//case signal := <-signalStream:
-		//	compareAndSendCellFlippedEvents(c, signal.Turn, signal.OldWorld, signal.CurrentWorld)
-		//	c.events <- TurnComplete{CompletedTurns: signal.Turn}
 		case <-done.Done:
 			return response.World
 		case <-ticker.C:
@@ -68,7 +50,6 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				os.Exit(1)
 			}
 			c.events <- AliveCellsCount{CompletedTurns: response.Turn, CellsCount: response.AliveCellsCount}
-
 		case key := <-c.ioKeyPress:
 			switch string(key) {
 
