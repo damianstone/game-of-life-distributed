@@ -17,6 +17,7 @@ var world [][]uint8
 var mutex sync.Mutex
 var turn int
 var shutdownFlag bool
+var pauseFlag bool
 var turnSignalChannel = make(chan schema.TurnSignal)
 
 type Broker struct{}
@@ -32,6 +33,11 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 		turn++
 		//turnSignalChannel <- schema.TurnSignal{Turn: turn, CurrentWorld: world, OldWorld: oldWorld}
 		mutex.Unlock()
+
+		// Check for pause flag and wait if set
+		for pauseFlag {
+			time.Sleep(100 * time.Millisecond)
+		}
 	}
 	response.Status = "OK"
 	response.World = world
@@ -57,11 +63,22 @@ func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentSt
 	mutex.Lock()
 	defer mutex.Unlock()
 	switch string(request.Key) {
-	case "q":
 
 	case "k":
+		// TODO: send the current state to the client and then shutdown the server gracefully
+		*response = schema.CurrentStateResponse{
+			CurrentWorld: world,
+			Turn:         turn,
+		}
 		shutdownFlag = true
 	case "p":
+		// TODO: pause the execution of the server and send the current state to the client
+		// TODO: the client should be able to resume the execution of the server
+		pauseFlag = !pauseFlag
+		*response = schema.CurrentStateResponse{
+			CurrentWorld: world,
+			Turn:         turn,
+		}
 	}
 
 	return err

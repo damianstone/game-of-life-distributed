@@ -73,6 +73,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 			switch string(key) {
 
 			case "s":
+				// TODO: generate a PGM file of the current state
 				request := schema.BlankRequest{}
 				response := new(schema.CurrentStateResponse)
 				err := client.Call(schema.GetCurrentState, request, response)
@@ -83,6 +84,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				writeImage(p, c, response.Turn, response.CurrentWorld)
 
 			case "q":
+				// TODO: close the client without closing the server
 				request := schema.BlankRequest{}
 				response := new(schema.CurrentStateResponse)
 				err := client.Call(schema.GetCurrentState, request, response)
@@ -91,38 +93,67 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 					os.Exit(1)
 				}
 				writeImage(p, c, response.Turn, response.CurrentWorld)
-				c.events <- StateChange{CompletedTurns: 0, NewState: Quitting}
+				c.events <- StateChange{CompletedTurns: response.Turn, NewState: Quitting}
 				close(c.events)
 				os.Exit(0)
 
 			case "k":
-				// save the last state
-				request := schema.KeyRequest{Key: "k"}
+				// channel to signal image writing completion
+				imageWriteDone := make(chan struct{})
+
+				// TODO: FIX - get the current state
+				request := schema.BlankRequest{}
 				response := new(schema.CurrentStateResponse)
-				errState := client.Call(schema.GetCurrentState, request, response)
-				if errState != nil {
-					fmt.Println("Error HandleKey -> ", errState)
+				err := client.Call(schema.GetCurrentState, request, response)
+				if err != nil {
+					fmt.Println("Error GetCurrentState -> ", err)
 					os.Exit(1)
 				}
-				lastTurn := response.Turn
-				writeImage(p, c, lastTurn, response.CurrentWorld)
+				writeImage(p, c, response.Turn, response.CurrentWorld)
 
-				// shut down the server
-				request = schema.KeyRequest{Key: "q"}
-				response = new(schema.CurrentStateResponse)
-				errShutDown := client.Call(schema.HandleKey, request, response)
+				go func() {
+					writeImage(p, c, response.Turn, response.CurrentWorld)
+					close(imageWriteDone)
+				}()
+
+				// Wait for image writing to complete
+				<-imageWriteDone
+
+				// shutdown the server
+				shutDownRequest := schema.KeyRequest{Key: "k"}
+				shutDownResponse := new(schema.CurrentStateResponse)
+				errShutDown := client.Call(schema.HandleKey, shutDownRequest, shutDownResponse)
 				if errShutDown != nil {
 					fmt.Println("Error HandleKey -> ", errShutDown)
 					os.Exit(1)
 				}
-				c.events <- StateChange{CompletedTurns: lastTurn, NewState: Quitting}
 
 			case "p":
-				c.events <- StateChange{CompletedTurns: 0, NewState: Paused}
-				fmt.Println("Turn" + strconv.Itoa(p.Turns))
+				// TODO: print he current turn and pause the game
+				request := schema.KeyRequest{
+					Key: "p",
+				}
+				response := new(schema.CurrentStateResponse)
+				err := client.Call(schema.HandleKey, request, response)
+				if err != nil {
+					fmt.Println("Error HandleKey -> ", err)
+					os.Exit(1)
+				}
+				c.events <- StateChange{CompletedTurns: response.Turn, NewState: Paused}
+				fmt.Println("Turn" + strconv.Itoa(response.Turn) + "paused")
+
 				for {
 					if <-c.ioKeyPress == 'p' {
-						c.events <- StateChange{0, Executing}
+						request := schema.KeyRequest{
+							Key: "p",
+						}
+						response := new(schema.CurrentStateResponse)
+						err := client.Call(schema.HandleKey, request, response)
+						if err != nil {
+							fmt.Println("Error HandleKey -> ", err)
+							os.Exit(1)
+						}
+						c.events <- StateChange{CompletedTurns: response.Turn, NewState: Executing}
 						fmt.Println("Continuing")
 						break
 					}
