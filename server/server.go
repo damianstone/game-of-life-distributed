@@ -69,19 +69,13 @@ func callNode(add string, client *rpc.Client, height int, nodeWorld [][]uint8, o
 
 	fmt.Println("Calling node in address: ", add)
 
-	done := client.Go(schema.HandleWorker, request, response, nil)
+	call := client.Go(schema.HandleWorker, request, response, nil)
 
 	fmt.Println("Response from node: ", response.Status)
 
-	go func(done *rpc.Call) {
-		// Wait for the operation to complete
-		<-done.Done
-		if done.Error != nil {
-			fmt.Println("Error calling worker:", done.Error)
-		} else {
-			out <- response.World[1 : height+1]
-		}
-	}(done)
+	<-call.Done
+	fmt.Println("CALL DONE")
+	out <- response.World[1 : height+1]
 }
 
 // HandleBroker is the function that will be called by the client
@@ -112,6 +106,7 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 				height := endY - startY
 
 				nodeWorld := getImagePart(request.Params, startY, endY, world)
+
 				nodeAdd := nodeAddresses[i]
 				client, _ := rpc.Dial("tcp", nodeAdd)
 				callNode(nodeAdd, client, height, nodeWorld, channelSlice[i])
@@ -121,9 +116,9 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 				endY := (i + 1) * workerHeight
 				height := endY - startY
 				nodeWorld := getImagePart(request.Params, startY, endY, world)
+
 				nodeAdd := nodeAddresses[i]
 				client, _ := rpc.Dial("tcp", nodeAdd)
-
 				callNode(nodeAdd, client, height, nodeWorld, channelSlice[i])
 
 			}
@@ -131,13 +126,16 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 		}
 
 		for i := 0; i < request.Params.Threads; i++ {
+			fmt.Println("WAITING FOR CHANNEL")
 			receivedData := <-channelSlice[i]
 			updatedWorld = append(updatedWorld, receivedData...)
 		}
 
+		mutex.Lock()
 		fmt.Println("NEXT ITERATION")
 		world = updatedWorld
 		turn++
+		mutex.Unlock()
 
 		// check for pause flag and wait if set
 		for pauseFlag {
