@@ -11,14 +11,13 @@ import (
 )
 
 type distributorChannels struct {
-	events       chan<- Event
-	ioCommand    chan<- ioCommand
-	ioIdle       <-chan bool
-	ioFilename   chan<- string
-	ioOutput     chan<- uint8
-	ioInput      <-chan uint8
-	ioKeyPress   <-chan rune
-	signalStream <-chan schema.TurnSignal
+	events     chan<- Event
+	ioCommand  chan<- ioCommand
+	ioIdle     <-chan bool
+	ioFilename chan<- string
+	ioOutput   chan<- uint8
+	ioInput    <-chan uint8
+	ioKeyPress <-chan rune
 }
 
 func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint8) [][]uint8 {
