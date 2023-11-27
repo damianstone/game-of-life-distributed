@@ -86,63 +86,8 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 		"127.0.0.1:8050",
 		"127.0.0.1:8051",
 	}
-	workerHeight := len(world) / request.Params.Threads
-	remaining := len(world) % request.Params.Threads
 
-	//  channel to collect worker results
-	channelSlice := make([]chan [][]uint8, request.Params.Threads)
-
-	for turn = 0; turn < request.Params.Turns; {
-
-		updatedWorld := make([][]uint8, 0)
-
-		for i := 0; i < request.Params.Threads; i++ {
-
-			channelSlice[i] = make(chan [][]uint8)
-
-			if (remaining > 0) && ((i + 1) == request.Params.Threads) {
-				startY := i * workerHeight
-				endY := ((i + 1) * workerHeight) + remaining
-				height := endY - startY
-
-				nodeWorld := getImagePart(request.Params, startY, endY, world)
-
-				nodeAdd := nodeAddresses[i]
-				client, _ := rpc.Dial("tcp", nodeAdd)
-				callNode(nodeAdd, client, height, nodeWorld, channelSlice[i])
-
-			} else {
-				startY := i * workerHeight
-				endY := (i + 1) * workerHeight
-				height := endY - startY
-				nodeWorld := getImagePart(request.Params, startY, endY, world)
-
-				nodeAdd := nodeAddresses[i]
-				client, _ := rpc.Dial("tcp", nodeAdd)
-				callNode(nodeAdd, client, height, nodeWorld, channelSlice[i])
-
-			}
-
-		}
-
-		for i := 0; i < request.Params.Threads; i++ {
-			fmt.Println("WAITING FOR CHANNEL")
-			receivedData := <-channelSlice[i]
-			updatedWorld = append(updatedWorld, receivedData...)
-		}
-
-		mutex.Lock()
-		fmt.Println("NEXT ITERATION")
-		world = updatedWorld
-		turn++
-		mutex.Unlock()
-
-		// check for pause flag and wait if set
-		for pauseFlag {
-			time.Sleep(100 * time.Millisecond)
-		}
-
-	}
+	// TODO: for loop for the number of turns
 
 	response.Status = "OK"
 	response.World = world
