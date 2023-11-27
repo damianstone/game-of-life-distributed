@@ -4,6 +4,7 @@ var BrokerHandler = "Broker.HandleBroker"
 var GetCurrentState = "Broker.GetCurrentState"
 var HandleKey = "Broker.HandleKey"
 var HandleWorker = "Worker.HandleNextState"
+var CloseNode = "Worker.CloseNode"
 
 // Structured data types for communication between the client and the broker
 

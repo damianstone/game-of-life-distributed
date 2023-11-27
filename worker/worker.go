@@ -79,6 +79,7 @@ func (w *Worker) HandleNextState(request schema.Request, response *schema.Respon
 }
 
 func (w *Worker) CloseNode(request schema.BlankRequest, response *schema.Response) (err error) {
+	fmt.Println("Closing node...")
 	os.Exit(0)
 	return err
 }

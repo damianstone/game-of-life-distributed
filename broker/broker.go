@@ -16,10 +16,13 @@ import (
 var world [][]uint8
 var mutex sync.Mutex
 var turn int
+
 var shutdownFlag bool
 var pauseFlag bool
 
-type Broker struct{}
+type Broker struct {
+	nodeAddresses []string
+}
 
 func callNode(add string, client *rpc.Client, height int, nodeWorld [][]uint8, out chan [][]uint8) {
 	defer client.Close()
@@ -38,75 +41,43 @@ func callNode(add string, client *rpc.Client, height int, nodeWorld [][]uint8, o
 	}
 
 	out <- response.World[1 : height+1]
+
 }
 
 func (b *Broker) HandleBroker(request schema.Request, response *schema.Response) (err error) {
 	world = request.World
-
-	nodeAddresses := []string{
-		"127.0.0.1:8050",
-		"127.0.0.1:8051",
-		"127.0.0.1:8052",
-		"127.0.0.1:8053",
-	}
-
-	workerHeight := len(world) / request.Params.Threads
-	remaining := len(world) % request.Params.Threads
+	nodeAddresses := b.nodeAddresses
+	workerHeight := len(world) / len(nodeAddresses)
+	remaining := len(world) % len(nodeAddresses)
 
 	//  channel to collect worker results
-	channelSlice := make([]chan [][]uint8, request.Params.Threads)
+	channelSlice := make([]chan [][]uint8, len(nodeAddresses))
 
 	for turn = 0; turn < request.Params.Turns; {
-
 		updatedWorld := make([][]uint8, 0)
 
-		for i := 0; i < request.Params.Threads; i++ {
-
+		for i := 0; i < len(nodeAddresses); i++ {
 			channelSlice[i] = make(chan [][]uint8)
 
-			// what i'm checking here?
-			if (remaining > 0) && ((i + 1) == request.Params.Threads) {
-				startY := i * workerHeight
-				endY := ((i + 1) * workerHeight) + remaining
-				height := endY - startY
+			startY := i * workerHeight
+			endY := ((i + 1) * workerHeight) + remaining
+			height := endY - startY
 
-				// get portion of the image
-				nodeWorld := utils.GetImagePart(request.Params, startY, endY, world)
+			// get portion of the image
+			nodeWorld := utils.GetImagePart(request.Params, startY, endY, world)
 
-				// connect to the node
-				nodeAdd := nodeAddresses[i]
-				client, nodeErr := rpc.Dial("tcp", nodeAdd)
+			// connect to the node
+			nodeAdd := nodeAddresses[i]
+			client, nodeErr := rpc.Dial("tcp", nodeAdd)
 
-				if nodeErr != nil {
-					fmt.Println("Error when connecting to node: "+nodeAdd+" Details : ", nodeErr)
-
-				}
-
-				go callNode(nodeAdd, client, height, nodeWorld, channelSlice[i])
-
-			} else {
-				startY := i * workerHeight
-				endY := (i + 1) * workerHeight
-				height := endY - startY
-
-				// get portion of the image
-				nodeWorld := utils.GetImagePart(request.Params, startY, endY, world)
-
-				// connect to the node
-				nodeAdd := nodeAddresses[i]
-				client, nodeErr := rpc.Dial("tcp", nodeAdd)
-
-				if nodeErr != nil {
-					fmt.Println("Error when connecting to node: "+nodeAdd+" Details : ", nodeErr)
-
-				}
-
-				go callNode(nodeAdd, client, height, nodeWorld, channelSlice[i])
+			if nodeErr != nil {
+				fmt.Println("Error when connecting to node: "+nodeAdd+" Details : ", nodeErr)
 			}
 
+			go callNode(nodeAdd, client, height, nodeWorld, channelSlice[i])
 		}
 
-		for i := 0; i < request.Params.Threads; i++ {
+		for i := 0; i < len(nodeAddresses); i++ {
 			receivedData := <-channelSlice[i]
 			updatedWorld = append(updatedWorld, receivedData...)
 		}
@@ -145,10 +116,21 @@ func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentSt
 		world = [][]uint8{}
 		turn = 0
 	case "k":
+
+		for i := 0; i < len(b.nodeAddresses); i++ {
+			nAddress := b.nodeAddresses[i]
+			client, nodeErr := rpc.Dial("tcp", nAddress)
+			if nodeErr != nil {
+				fmt.Println("Error when connecting to node: "+nAddress+" Details : ", nodeErr)
+			}
+			done := client.Go(schema.CloseNode, schema.BlankRequest{}, schema.Response{}, nil)
+			<-done.Done
+			client.Close()
+		}
+
 		shutdownFlag = true
+
 	case "p":
-		// TODO: pause the execution of the broker and send the current state to the client
-		// TODO: the client should be able to resume the execution of the broker
 		pauseFlag = !pauseFlag
 		*response = schema.CurrentStateResponse{
 			CurrentWorld: world,
@@ -162,8 +144,19 @@ func main() {
 	pAddr := flag.String("port", "127.0.0.1:8030", "Port to listen on")
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
+
+	// Initialize the Broker struct with node addresses
+	broker := Broker{
+		nodeAddresses: []string{
+			"127.0.0.1:8050",
+			"127.0.0.1:8051",
+			"127.0.0.1:8052",
+			"127.0.0.1:8053",
+		},
+	}
+
 	// register the broker
-	err := rpc.Register(&Broker{})
+	err := rpc.Register(&broker)
 
 	if err != nil {
 		fmt.Println("Error registering broker: ", err)

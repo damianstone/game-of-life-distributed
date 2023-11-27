@@ -77,26 +77,15 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				close(c.events)
 
 				// wait for broker to restart before exiting the client
-				restartServer := make(chan struct{})
-				go func() {
-					shutDownRequest := schema.KeyRequest{Key: "q"}
-					shutDownResponse := new(schema.CurrentStateResponse)
-					errShutDown := client.Call(schema.HandleKey, shutDownRequest, shutDownResponse)
-					if errShutDown != nil {
-						fmt.Println("Error HandleKey -> ", errShutDown)
-						os.Exit(1)
-					}
-					close(restartServer)
-				}()
-				<-restartServer
+				shutDownRequest := schema.KeyRequest{Key: "q"}
+				shutDownResponse := new(schema.CurrentStateResponse)
+				done := client.Go(schema.HandleKey, shutDownRequest, shutDownResponse, nil)
+				<-done.Done
 
 				os.Exit(0)
 
 			case "k":
-				// channel to signal image writing completion
-				imageWriteDone := make(chan struct{})
-
-				// TODO: FIX - get the current state
+				// TODO: get the current state
 				request := schema.BlankRequest{}
 				response := new(schema.CurrentStateResponse)
 				err := client.Call(schema.GetCurrentState, request, response)
@@ -104,7 +93,9 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 					fmt.Println("Error GetCurrentState -> ", err)
 					os.Exit(1)
 				}
-				writeImage(p, c, response.Turn, response.CurrentWorld)
+
+				// channel to signal image writing completion
+				imageWriteDone := make(chan struct{})
 
 				go func() {
 					writeImage(p, c, response.Turn, response.CurrentWorld)
@@ -114,7 +105,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				// Wait for image writing to complete
 				<-imageWriteDone
 
-				// shutdown the broker
+				// TODO: shutdown the broker and nodes
 				shutDownRequest := schema.KeyRequest{Key: "k"}
 				shutDownResponse := new(schema.CurrentStateResponse)
 				errShutDown := client.Call(schema.HandleKey, shutDownRequest, shutDownResponse)
