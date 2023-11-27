@@ -84,11 +84,11 @@ func (w *Worker) CloseNode(request schema.BlankRequest, response *schema.Respons
 }
 
 func main() {
-	// RPC server
+	// RPC broker
 	pAddr := flag.String("port", "127.0.0.1:8050", "IP and port to listen on")
 	flag.Parse()
 
-	// Register Worker as an RPC server
+	// Register Worker as an RPC broker
 	rpc.Register(&Worker{})
 
 	listener, lisError := net.Listen("tcp", *pAddr)

@@ -5,7 +5,7 @@ var GetCurrentState = "Broker.GetCurrentState"
 var HandleKey = "Broker.HandleKey"
 var HandleWorker = "Worker.HandleNextState"
 
-// Structured data types for communication between the client and the server
+// Structured data types for communication between the client and the broker
 
 type Params struct {
 	Turns       int

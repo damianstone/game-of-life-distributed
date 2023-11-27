@@ -64,7 +64,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				writeImage(p, c, response.Turn, response.CurrentWorld)
 
 			case "q":
-				// TODO: close the client without closing the server
+				// TODO: close the client without closing the broker
 				request := schema.BlankRequest{}
 				response := new(schema.CurrentStateResponse)
 				err := client.Call(schema.GetCurrentState, request, response)
@@ -76,7 +76,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				c.events <- StateChange{CompletedTurns: response.Turn, NewState: Quitting}
 				close(c.events)
 
-				// wait for server to restart before exiting the client
+				// wait for broker to restart before exiting the client
 				restartServer := make(chan struct{})
 				go func() {
 					shutDownRequest := schema.KeyRequest{Key: "q"}
@@ -114,7 +114,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				// Wait for image writing to complete
 				<-imageWriteDone
 
-				// shutdown the server
+				// shutdown the broker
 				shutDownRequest := schema.KeyRequest{Key: "k"}
 				shutDownResponse := new(schema.CurrentStateResponse)
 				errShutDown := client.Call(schema.HandleKey, shutDownRequest, shutDownResponse)
