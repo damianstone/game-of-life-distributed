@@ -34,7 +34,7 @@ func callNode(add string, client *rpc.Client, height int, nodeWorld [][]uint8, o
 	err := client.Call(schema.HandleWorker, request, response)
 
 	if err != nil {
-		fmt.Println("Error calling node: ", err)
+		fmt.Println("Error calling node: "+add, err)
 	}
 
 	out <- response.World[1 : height+1]
@@ -64,22 +64,43 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 
 			channelSlice[i] = make(chan [][]uint8)
 
+			// what i'm checking here?
 			if (remaining > 0) && ((i + 1) == request.Params.Threads) {
 				startY := i * workerHeight
 				endY := ((i + 1) * workerHeight) + remaining
 				height := endY - startY
+
+				// get portion of the image
 				nodeWorld := utils.GetImagePart(request.Params, startY, endY, world)
+
+				// connect to the node
 				nodeAdd := nodeAddresses[i]
-				client, _ := rpc.Dial("tcp", nodeAdd)
+				client, nodeErr := rpc.Dial("tcp", nodeAdd)
+
+				if nodeErr != nil {
+					fmt.Println("Error when connecting to node: "+nodeAdd+" Details : ", nodeErr)
+
+				}
+
 				go callNode(nodeAdd, client, height, nodeWorld, channelSlice[i])
 
 			} else {
 				startY := i * workerHeight
 				endY := (i + 1) * workerHeight
 				height := endY - startY
+
+				// get portion of the image
 				nodeWorld := utils.GetImagePart(request.Params, startY, endY, world)
+
+				// connect to the node
 				nodeAdd := nodeAddresses[i]
-				client, _ := rpc.Dial("tcp", nodeAdd)
+				client, nodeErr := rpc.Dial("tcp", nodeAdd)
+
+				if nodeErr != nil {
+					fmt.Println("Error when connecting to node: "+nodeAdd+" Details : ", nodeErr)
+
+				}
+
 				go callNode(nodeAdd, client, height, nodeWorld, channelSlice[i])
 			}
 
