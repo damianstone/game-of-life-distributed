@@ -159,7 +159,7 @@ func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentSt
 }
 
 func main() {
-	pAddr := flag.String("port", "8030", "Port to listen on")
+	pAddr := flag.String("port", "127.0.0.1:8030", "Port to listen on")
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
 	// register the broker
@@ -170,7 +170,9 @@ func main() {
 		return
 	}
 
-	listener, _ := net.Listen("tcp", ":"+*pAddr)
+	listener, _ := net.Listen("tcp", *pAddr)
+
+	fmt.Println("Broker running on port: ", *pAddr)
 
 	defer func(listener net.Listener) {
 		err := listener.Close()
