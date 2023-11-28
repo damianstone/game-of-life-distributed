@@ -1,6 +1,15 @@
-package utils
+package main
 
-import "uk.ac.bris.cs/gameoflife/util"
+import (
+	"flag"
+	"fmt"
+	"net"
+	"net/rpc"
+	"os"
+	"uk.ac.bris.cs/gameoflife/schema"
+)
+
+type Worker struct{}
 
 func countLiveNeighbours(i int, j int, world [][]uint8) int {
 	// 8 potential neighbours per cell
@@ -34,15 +43,8 @@ func countLiveNeighbours(i int, j int, world [][]uint8) int {
 	return liveNeighbours
 }
 
-func CreateWorld(height int, width int) [][]uint8 {
-	world := make([][]uint8, height)
-	for i := range world {
-		world[i] = make([]uint8, width)
-	}
-	return world
-}
-
-func CalculateNextState(currentWorld [][]uint8) [][]uint8 {
+func (w *Worker) HandleNextState(request schema.Request, response *schema.Response) (err error) {
+	currentWorld := request.World
 
 	nextWorld := make([][]uint8, len(currentWorld))
 
@@ -71,17 +73,41 @@ func CalculateNextState(currentWorld [][]uint8) [][]uint8 {
 		}
 	}
 
-	return nextWorld
+	response.Status = "OK"
+	response.World = nextWorld
+	return err
 }
 
-func CountAliveCells(world [][]uint8) int {
-	var cells []util.Cell
-	for i := range world {
-		for j := range world[i] {
-			if world[i][j] == 255 {
-				cells = append(cells, util.Cell{X: j, Y: i})
-			}
-		}
+func (w *Worker) CloseNode(request schema.BlankRequest, response *schema.Response) (err error) {
+	fmt.Println("Closing node...")
+	os.Exit(0)
+	return err
+}
+
+func main() {
+	// RPC broker
+	pAddr := flag.String("port", "127.0.0.1:8050", "IP and port to listen on")
+	flag.Parse()
+
+	// Register Worker as an RPC broker
+	rpc.Register(&Worker{})
+
+	listener, lisError := net.Listen("tcp", *pAddr)
+	if lisError != nil {
+		fmt.Println(lisError)
+		return
 	}
-	return len(cells)
+	defer listener.Close()
+
+	fmt.Println("Listening on " + *pAddr)
+
+	for {
+		conn, acceptError := listener.Accept()
+		if acceptError != nil {
+			fmt.Println("Error accepting connection: ", acceptError)
+			continue
+		}
+
+		go rpc.ServeConn(conn)
+	}
 }

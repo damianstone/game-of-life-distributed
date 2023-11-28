@@ -3,8 +3,10 @@ package schema
 var BrokerHandler = "Broker.HandleBroker"
 var GetCurrentState = "Broker.GetCurrentState"
 var HandleKey = "Broker.HandleKey"
+var HandleWorker = "Worker.HandleNextState"
+var CloseNode = "Worker.CloseNode"
 
-// Structured data types for communication between the client and the server
+// Structured data types for communication between the client and the broker
 
 type Params struct {
 	Turns       int
@@ -13,9 +15,16 @@ type Params struct {
 	ImageHeight int
 }
 
+type Request struct {
+	Message string
+	World   [][]uint8
+	Params  Params
+}
+
 type Response struct {
-	Status string
-	World  [][]uint8
+	Message string
+	Status  string
+	World   [][]uint8
 }
 
 type BlankRequest struct{}
@@ -24,11 +33,6 @@ type CurrentStateResponse struct {
 	AliveCellsCount int
 	CurrentWorld    [][]uint8
 	Turn            int
-}
-
-type Request struct {
-	World  [][]uint8
-	Params Params
 }
 
 type KeyRequest struct {
