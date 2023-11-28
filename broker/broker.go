@@ -9,14 +9,15 @@ import (
 	"os"
 	"sync"
 	"time"
+
 	"uk.ac.bris.cs/gameoflife/broker/utils"
 	"uk.ac.bris.cs/gameoflife/schema"
 )
 
 var world [][]uint8
 var mutex sync.Mutex
+var totalTurns int
 var turn int
-
 var shutdownFlag bool
 var pauseFlag bool
 
@@ -46,6 +47,7 @@ func callNode(add string, client *rpc.Client, height int, nodeWorld [][]uint8, o
 
 func (b *Broker) HandleBroker(request schema.Request, response *schema.Response) (err error) {
 	world = request.World
+	totalTurns = request.Params.Turns
 	nodeAddresses := b.nodeAddresses
 	workerHeight := len(world) / len(nodeAddresses)
 	remaining := len(world) % len(nodeAddresses)
@@ -53,7 +55,7 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 	//  channel to collect worker results
 	channelSlice := make([]chan [][]uint8, len(nodeAddresses))
 
-	for turn = 0; turn < request.Params.Turns; {
+	for turn = 0; turn < totalTurns; {
 		updatedWorld := make([][]uint8, 0)
 
 		for i := 0; i < len(nodeAddresses); i++ {
@@ -113,8 +115,12 @@ func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentSt
 	defer mutex.Unlock()
 	switch string(request.Key) {
 	case "q":
+		*response = schema.CurrentStateResponse{
+			CurrentWorld: world,
+			Turn:         turn,
+		}
+		totalTurns = 0
 		world = [][]uint8{}
-		turn = 0
 	case "k":
 
 		for i := 0; i < len(b.nodeAddresses); i++ {

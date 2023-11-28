@@ -2,6 +2,7 @@ package gol
 
 import (
 	"strconv"
+
 	"uk.ac.bris.cs/gameoflife/util"
 )
 
@@ -30,7 +31,7 @@ func writeImage(p Params, c distributorChannels, turn int, world [][]uint8) {
 		}
 	}
 
-	//c.events <- ImageOutputComplete{CompletedTurns: turn, Filename: filename + ".png"}
+	c.events <- ImageOutputComplete{CompletedTurns: turn, Filename: filename + ".png"}
 }
 
 func getImage(p Params, c distributorChannels, world [][]uint8) [][]uint8 {
