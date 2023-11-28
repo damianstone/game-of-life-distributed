@@ -49,16 +49,18 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 	world = request.World
 	totalTurns = request.Params.Turns
 	nodeAddresses := b.nodeAddresses
-	workerHeight := len(world) / len(nodeAddresses)
-	remaining := len(world) % len(nodeAddresses)
+	numberNodes := request.Params.Threads
+
+	workerHeight := len(world) / numberNodes
+	remaining := len(world) % numberNodes
 
 	//  channel to collect worker results
-	channelSlice := make([]chan [][]uint8, len(nodeAddresses))
+	channelSlice := make([]chan [][]uint8, numberNodes)
 
 	for turn = 0; turn < totalTurns; {
 		updatedWorld := make([][]uint8, 0)
 
-		for i := 0; i < len(nodeAddresses); i++ {
+		for i := 0; i < numberNodes; i++ {
 			channelSlice[i] = make(chan [][]uint8)
 
 			startY := i * workerHeight
@@ -79,7 +81,7 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 			go callNode(nodeAdd, client, height, nodeWorld, channelSlice[i])
 		}
 
-		for i := 0; i < len(nodeAddresses); i++ {
+		for i := 0; i < numberNodes; i++ {
 			receivedData := <-channelSlice[i]
 			updatedWorld = append(updatedWorld, receivedData...)
 		}
