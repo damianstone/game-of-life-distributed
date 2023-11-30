@@ -17,7 +17,7 @@ func BenchmarkGOL(b *testing.B) {
 		param := gol.Params{
 			ImageWidth:  512,
 			ImageHeight: 512,
-			Turns:       10000,
+			Turns:       1000,
 			Threads:     threads,
 		}
 

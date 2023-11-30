@@ -29,7 +29,7 @@ func callNode(add string, client *rpc.Client, height int, nodeWorld [][]uint8, o
 	defer client.Close()
 
 	request := schema.Request{
-		World: nodeWorld,
+		World: nodeWorld, // portion of the image that corresponds to the node
 	}
 	response := new(schema.Response)
 
@@ -42,14 +42,13 @@ func callNode(add string, client *rpc.Client, height int, nodeWorld [][]uint8, o
 	}
 
 	out <- response.World[1 : height+1]
-
 }
 
 func (b *Broker) HandleBroker(request schema.Request, response *schema.Response) (err error) {
 	world = request.World
 	totalTurns = request.Params.Turns
 	nodeAddresses := b.nodeAddresses
-	numberNodes := request.Params.Threads
+	numberNodes := len(nodeAddresses)
 
 	workerHeight := len(world) / numberNodes
 	remaining := len(world) % numberNodes
@@ -132,6 +131,7 @@ func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentSt
 				fmt.Println("Error when connecting to node: "+nAddress+" Details : ", nodeErr)
 			}
 			done := client.Go(schema.CloseNode, schema.BlankRequest{}, schema.Response{}, nil)
+			// waitingn for the node to close
 			<-done.Done
 			client.Close()
 		}
