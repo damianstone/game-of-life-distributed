@@ -3,8 +3,11 @@ package schema
 var BrokerHandler = "Broker.HandleBroker"
 var GetCurrentState = "Broker.GetCurrentState"
 var HandleKey = "Broker.HandleKey"
+
 var HandleWorker = "Worker.HandleNextState"
 var CloseNode = "Worker.CloseNode"
+
+var HandleFlipCells = "Distributor.HandleFlipCells"
 
 // Structured data types for communication between the client and the broker
 
@@ -37,4 +40,10 @@ type CurrentStateResponse struct {
 
 type KeyRequest struct {
 	Key string
+}
+
+type FlipRequest struct {
+	OldWorld [][]uint8
+	NewWorld [][]uint8
+	Turn     int
 }

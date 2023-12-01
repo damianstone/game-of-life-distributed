@@ -25,6 +25,18 @@ type Broker struct {
 	nodeAddresses []string
 }
 
+func callDistributor(updatedWorld [][]uint8) {
+	// TODO: send old world and updated world to client before incramenting turn
+	client, nodeErr := rpc.Dial("tcp", "127.0.0.1:8020")
+	if nodeErr != nil {
+		fmt.Println("Error when connecting to client: ", nodeErr)
+		shutdownFlag = true
+	}
+	done := client.Go(schema.HandleFlipCells, schema.FlipRequest{OldWorld: world, NewWorld: updatedWorld, Turn: turn}, schema.Response{}, nil)
+	<-done.Done
+	client.Close()
+}
+
 func callNode(add string, client *rpc.Client, height int, nodeWorld [][]uint8, out chan [][]uint8) {
 	defer client.Close()
 
@@ -84,6 +96,8 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 			receivedData := <-channelSlice[i]
 			updatedWorld = append(updatedWorld, receivedData...)
 		}
+
+		callDistributor(updatedWorld)
 
 		mutex.Lock()
 		world = updatedWorld
@@ -178,7 +192,7 @@ func main() {
 	defer func(listener net.Listener) {
 		err := listener.Close()
 		if err != nil {
-
+			fmt.Println("Error closing listener: ", err)
 		}
 	}(listener)
 
