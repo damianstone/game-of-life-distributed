@@ -32,8 +32,8 @@ type Distributor struct{}
 
 func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint8) [][]uint8 {
 	ticker := time.NewTicker(2 * time.Second)
-	// client, _ := rpc.Dial("tcp", "127.0.0.1:8030")
-	client, _ := rpc.Dial("tcp", "18.133.185.254:8030")
+	client, _ := rpc.Dial("tcp", "127.0.0.1:8030")
+	// client, _ := rpc.Dial("tcp", "18.133.185.254:8030")
 	defer client.Close()
 	request := schema.Request{
 		World: initialWorld,
@@ -211,8 +211,8 @@ func distributor(p Params, c distributorChannels) {
 		distributorRegistered = true
 	}
 
-	// pAddr := "127.0.0.1:8020"
-	pAddr := "13.40.158.33:8020"
+	pAddr := "127.0.0.1:8020"
+	// pAddr := "13.40.158.33:8020"
 	listener, err := net.Listen("tcp", pAddr)
 
 	if err != nil {

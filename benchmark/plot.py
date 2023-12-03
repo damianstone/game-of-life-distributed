@@ -2,13 +2,15 @@ import matplotlib.pyplot as plt
 import re
 
 
-# signal SDL
+
+# with SDL
 data = """
-BenchmarkGOL/512x512x1000-1-8         	       1	62272204403 ns/op	22102448 B/op	   56665 allocs/op
-BenchmarkGOL/512x512x1000-2-8         	       1	37184262015 ns/op	13340016 B/op	   35788 allocs/op
-BenchmarkGOL/512x512x1000-3-8         	       1	30277619373 ns/op	11440760 B/op	   31332 allocs/op
-BenchmarkGOL/512x512x1000-4-8         	       1	27861971582 ns/op	11061440 B/op	   29605 allocs/op
+BenchmarkGOL/512x512x1000-1-8         	       1	33888639819 ns/op	1242717048 B/op	 6681899 allocs/op
+BenchmarkGOL/512x512x1000-2-8         	       1	25123140827 ns/op	1239012088 B/op	 6674620 allocs/op
+BenchmarkGOL/512x512x1000-3-8         	       1	23532063906 ns/op	1220313064 B/op	 5656791 allocs/op
+BenchmarkGOL/512x512x1000-4-8         	       1	22929790875 ns/op	1239001872 B/op	 6674591 allocs/op
 """
+
 
 # Regular expression pattern to extract relevant data
 pattern = r"BenchmarkGOL/(\d+)x(\d+)x(\d+)-(\d+)-\d+\s+\d+\s+(\d+) ns/op\s+(\d+) B/op\s+(\d+) allocs/op"
