@@ -24,6 +24,7 @@ type distributorChannels struct {
 func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint8) [][]uint8 {
 	ticker := time.NewTicker(2 * time.Second)
 	client, _ := rpc.Dial("tcp", "127.0.0.1:8030")
+	// client, _ := rpc.Dial("tcp", "18.133.185.254:8030")
 	defer client.Close()
 	request := schema.Request{
 		World: initialWorld,
