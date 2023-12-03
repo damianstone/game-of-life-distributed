@@ -28,7 +28,8 @@ type Broker struct {
 func callDistributor(updatedWorld [][]uint8) {
 
 	// TODO: send old world and updated world to client before incramenting turn
-	client, nodeErr := rpc.Dial("tcp", "127.0.0.1:8020")
+	// client, nodeErr := rpc.Dial("tcp", "127.0.0.1:8020")
+	client, nodeErr := rpc.Dial("tcp", "13.40.158.33:8020")
 	if nodeErr != nil {
 		fmt.Println("Error when connecting to client: ", nodeErr)
 		shutdownFlag = true
@@ -169,24 +170,24 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	// Locally
-	broker := Broker{
-		nodeAddresses: []string{
-			"127.0.0.1:8050",
-			"127.0.0.1:8051",
-			"127.0.0.1:8052",
-			"127.0.0.1:8053",
-		},
-	}
-
-	// AWS
 	// broker := Broker{
 	// 	nodeAddresses: []string{
-	// 		"18.132.63.211:8050",
-	// 		"3.10.5.121:8051",
-	// 		"35.177.62.130:8052",
-	// 		"35.178.190.148:8053",
+	// 		"127.0.0.1:8050",
+	// 		"127.0.0.1:8051",
+	// 		"127.0.0.1:8052",
+	// 		"127.0.0.1:8053",
 	// 	},
 	// }
+
+	// AWS
+	broker := Broker{
+		nodeAddresses: []string{
+			"18.132.63.211:8050",
+			"3.10.5.121:8051",
+			"35.177.62.130:8052",
+			"35.178.190.148:8053",
+		},
+	}
 
 	// register the broker
 	err := rpc.Register(&broker)

@@ -1,13 +1,6 @@
 import matplotlib.pyplot as plt
 import re
 
-#  without SDL
-data = """
-BenchmarkGOL/512x512x10000-1-8         	       1	223952700638 ns/op	68247624 B/op	  181982 allocs/op
-BenchmarkGOL/512x512x10000-2-8         	       1	133581973270 ns/op	41257976 B/op	  111598 allocs/op
-BenchmarkGOL/512x512x10000-3-8         	       1	105894012434 ns/op	33222352 B/op	   90575 allocs/op
-BenchmarkGOL/512x512x10000-4-8         	       1	90681457518 ns/op	34419520 B/op	   93026 allocs/op
-"""
 
 # signal SDL
 data = """
