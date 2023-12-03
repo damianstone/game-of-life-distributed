@@ -2,5 +2,8 @@ goos: darwin
 goarch: amd64
 pkg: uk.ac.bris.cs/gameoflife
 cpu: Intel(R) Core(TM) i7-1068NG7 CPU @ 2.30GHz
-BenchmarkGOL/512x512x1000-8-8         	       1	11564526608 ns/op	 7279168 B/op	   16418 allocs/op
-ok  	uk.ac.bris.cs/gameoflife	11.773s
+BenchmarkGOL/512x512x1000-1-8         	       1	39972179001 ns/op	1244428744 B/op	 6686566 allocs/op
+BenchmarkGOL/512x512x1000-2-8         	       1	33282712288 ns/op	1241287032 B/op	 6680800 allocs/op
+BenchmarkGOL/512x512x1000-3-8         	       1	30220771037 ns/op	1222031320 B/op	 5661488 allocs/op
+BenchmarkGOL/512x512x1000-4-8         	       1	30543222902 ns/op	1240144736 B/op	 6677703 allocs/op
+ok  	uk.ac.bris.cs/gameoflife	134.210s

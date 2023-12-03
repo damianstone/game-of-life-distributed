@@ -1,9 +1,7 @@
 package gol
 
 import (
-	"flag"
 	"fmt"
-	"math/rand"
 	"net"
 	"net/rpc"
 	"os"
@@ -24,13 +22,11 @@ type distributorChannels struct {
 	ioKeyPress <-chan rune
 }
 
-type SignalData struct {
-	OldWorld [][]uint8
-	NewWorld [][]uint8
-	Turn     int
-}
-
-var turnChangedSignal = make(chan SignalData)
+var (
+	distributorRegistered bool
+	channels              distributorChannels
+	params                Params
+)
 
 type Distributor struct{}
 
@@ -63,21 +59,6 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				os.Exit(1)
 			}
 			c.events <- AliveCellsCount{CompletedTurns: response.Turn, CellsCount: response.AliveCellsCount}
-
-		case signalData := <-turnChangedSignal:
-			oldWorld := signalData.OldWorld
-			newWorld := signalData.NewWorld
-			turn := signalData.Turn
-
-			for i := range oldWorld {
-				for j := range oldWorld[i] {
-					if oldWorld[i][j] != newWorld[i][j] {
-						c.events <- CellFlipped{CompletedTurns: turn, Cell: util.Cell{X: j, Y: i}}
-					}
-				}
-			}
-
-			c.events <- TurnComplete{CompletedTurns: turn}
 
 		case key := <-c.ioKeyPress:
 			switch string(key) {
@@ -163,42 +144,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 
 }
 
-func (d *Distributor) HandleFlipCells(request schema.FlipRequest, response *schema.Response) (err error) {
-	oldWorld := request.OldWorld
-	newWorld := request.NewWorld
-	turn := request.Turn
-	turnChangedSignal <- SignalData{OldWorld: oldWorld, NewWorld: newWorld, Turn: turn}
-	return err
-}
-
-func (d *Distributor) CloseNode(request schema.BlankRequest, response *schema.Response) (err error) {
-	fmt.Println("Closing distributor...")
-	os.Exit(0)
-	return err
-}
-
-// distributor divides the work between workers and interacts with other goroutines.
-func distributor(p Params, c distributorChannels) {
-	pAddr := flag.String("port", "127.0.0.1:8020", "Port to listen on")
-	flag.Parse()
-	rand.Seed(time.Now().UnixNano())
-
-	// register the broker
-	err := rpc.Register(&Distributor{})
-
-	if err != nil {
-		fmt.Println("Error registering distributor: ", err)
-		return
-	}
-
-	listener, _ := net.Listen("tcp", *pAddr)
-
-	fmt.Println("Distributor running on port: ", *pAddr)
-
-	defer listener.Close()
-
-	go rpc.Accept(listener)
-
+func initGame(p Params, c distributorChannels) {
 	worldSlice := createWorld(p.ImageHeight, p.ImageWidth)
 	initialWorld := getImage(p, c, worldSlice)
 
@@ -225,4 +171,57 @@ func distributor(p Params, c distributorChannels) {
 
 	// Close the channel to stop the SDL goroutine gracefully. Removing may cause deadlock.
 	close(c.events)
+}
+
+func (d *Distributor) HandleFlipCells(request schema.FlipRequest, response *schema.Response) (err error) {
+	oldWorld := request.OldWorld
+	newWorld := request.NewWorld
+	turn := request.Turn
+
+	for i := range oldWorld {
+		for j := range oldWorld[i] {
+			if oldWorld[i][j] != newWorld[i][j] {
+				channels.events <- CellFlipped{CompletedTurns: turn, Cell: util.Cell{X: j, Y: i}}
+			}
+		}
+	}
+
+	channels.events <- TurnComplete{CompletedTurns: turn}
+	return err
+}
+
+func (d *Distributor) CloseNode(request schema.BlankRequest, response *schema.Response) (err error) {
+	fmt.Println("Closing distributor...")
+	os.Exit(0)
+	return err
+}
+
+// distributor divides the work between workers and interacts with other goroutines.
+func distributor(p Params, c distributorChannels) {
+	channels = c
+	params = p
+
+	if !distributorRegistered {
+		err := rpc.Register(&Distributor{})
+		if err != nil {
+			fmt.Println("Error registering distributor: ", err)
+			return
+		}
+		distributorRegistered = true
+	}
+
+	pAddr := "127.0.0.1:8020"
+	listener, err := net.Listen("tcp", pAddr)
+
+	if err != nil {
+		fmt.Println("Error listening: ", err)
+		os.Exit(1)
+	}
+
+	defer listener.Close()
+	fmt.Println("Distributor running on port: ", pAddr)
+
+	go rpc.Accept(listener)
+
+	initGame(p, c)
 }

@@ -26,14 +26,14 @@ type Broker struct {
 }
 
 func callDistributor(updatedWorld [][]uint8) {
+
 	// TODO: send old world and updated world to client before incramenting turn
 	client, nodeErr := rpc.Dial("tcp", "127.0.0.1:8020")
 	if nodeErr != nil {
 		fmt.Println("Error when connecting to client: ", nodeErr)
 		shutdownFlag = true
 	}
-	done := client.Go(schema.HandleFlipCells, schema.FlipRequest{OldWorld: world, NewWorld: updatedWorld, Turn: turn}, schema.Response{}, nil)
-	<-done.Done
+	client.Call(schema.HandleFlipCells, schema.FlipRequest{OldWorld: world, NewWorld: updatedWorld, Turn: turn}, schema.Response{})
 	client.Close()
 }
 
@@ -60,6 +60,7 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 	world = request.World
 	totalTurns = request.Params.Turns
 	nodeAddresses := b.nodeAddresses
+	// numberNodes := request.Params.Threads // for testing purposes
 	numberNodes := len(nodeAddresses)
 
 	workerHeight := len(world) / numberNodes
