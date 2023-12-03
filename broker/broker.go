@@ -60,8 +60,8 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 	world = request.World
 	totalTurns = request.Params.Turns
 	nodeAddresses := b.nodeAddresses
-	// numberNodes := request.Params.Threads // for testing purposes
-	numberNodes := len(nodeAddresses)
+	numberNodes := request.Params.Threads
+	// numberNodes := len(nodeAddresses)
 
 	workerHeight := len(world) / numberNodes
 	remaining := len(world) % numberNodes
@@ -168,7 +168,7 @@ func main() {
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
 
-	// Initialize the Broker struct with node addresses
+	// Locally
 	broker := Broker{
 		nodeAddresses: []string{
 			"127.0.0.1:8050",
@@ -177,6 +177,16 @@ func main() {
 			"127.0.0.1:8053",
 		},
 	}
+
+	// AWS
+	// broker := Broker{
+	// 	nodeAddresses: []string{
+	// 		"18.132.63.211:8050",
+	// 		"3.10.5.121:8051",
+	// 		"35.177.62.130:8052",
+	// 		"35.178.190.148:8053",
+	// 	},
+	// }
 
 	// register the broker
 	err := rpc.Register(&broker)

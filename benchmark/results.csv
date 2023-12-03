@@ -2,8 +2,308 @@ goos: darwin
 goarch: amd64
 pkg: uk.ac.bris.cs/gameoflife
 cpu: Intel(R) Core(TM) i7-1068NG7 CPU @ 2.30GHz
-BenchmarkGOL/512x512x1000-1-8         	       1	39972179001 ns/op	1244428744 B/op	 6686566 allocs/op
-BenchmarkGOL/512x512x1000-2-8         	       1	33282712288 ns/op	1241287032 B/op	 6680800 allocs/op
-BenchmarkGOL/512x512x1000-3-8         	       1	30220771037 ns/op	1222031320 B/op	 5661488 allocs/op
-BenchmarkGOL/512x512x1000-4-8         	       1	30543222902 ns/op	1240144736 B/op	 6677703 allocs/op
-ok  	uk.ac.bris.cs/gameoflife	134.210s
+BenchmarkGOL/5120x5120x100-2-8         	       1	361098998146 ns/op	4393722888 B/op	13570761 allocs/op
+SIGQUIT: quit
+PC=0x7ff81abe3c6f m=0 sigcode=0
+signal arrived during cgo execution
+
+goroutine 1 [syscall, locked to thread]:
+runtime.cgocall(0x1001d1cd0, 0xc004d91db0)
+	/usr/local/go/src/runtime/cgocall.go:157 +0x4b fp=0xc004d91d88 sp=0xc004d91d50 pc=0x100006a8b
+github.com/veandco/go-sdl2/sdl._Cfunc_PollEvent()
+	_cgo_gotypes.go:2057 +0x47 fp=0xc004d91db0 sp=0xc004d91d88 pc=0x1001c7b47
+github.com/veandco/go-sdl2/sdl.PollEvent()
+	/Users/damianstone/go/pkg/mod/github.com/veandco/go-sdl2@v0.4.4/sdl/events.go:1003 +0x13 fp=0xc004d91dc8 sp=0xc004d91db0 pc=0x1001c9213
+uk.ac.bris.cs/gameoflife/sdl.(*Window).PollEvent(...)
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/sdl/window.go:67
+uk.ac.bris.cs/gameoflife.TestMain(0xc00012a960)
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/sdl_test.go:47 +0x227 fp=0xc004d91e88 sp=0xc004d91dc8 pc=0x1001cfda7
+main.main()
+	_testmain.go:59 +0x1c6 fp=0xc004d91f40 sp=0xc004d91e88 pc=0x1001d0c66
+runtime.main()
+	/usr/local/go/src/runtime/proc.go:267 +0x2bb fp=0xc004d91fe0 sp=0xc004d91f40 pc=0x10003bafb
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc004d91fe8 sp=0xc004d91fe0 pc=0x10006e3a1
+
+goroutine 2 [force gc (idle), 7 minutes]:
+runtime.gopark(0x797019e386fe?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc00004cfa8 sp=0xc00004cf88 pc=0x10003bf6e
+runtime.goparkunlock(...)
+	/usr/local/go/src/runtime/proc.go:404
+runtime.forcegchelper()
+	/usr/local/go/src/runtime/proc.go:322 +0xb3 fp=0xc00004cfe0 sp=0xc00004cfa8 pc=0x10003bdd3
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc00004cfe8 sp=0xc00004cfe0 pc=0x10006e3a1
+created by runtime.init.6 in goroutine 1
+	/usr/local/go/src/runtime/proc.go:310 +0x1a
+
+goroutine 3 [GC sweep wait]:
+runtime.gopark(0x10040e901?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc00004d778 sp=0xc00004d758 pc=0x10003bf6e
+runtime.goparkunlock(...)
+	/usr/local/go/src/runtime/proc.go:404
+runtime.bgsweep(0x0?)
+	/usr/local/go/src/runtime/mgcsweep.go:321 +0xdf fp=0xc00004d7c8 sp=0xc00004d778 pc=0x100026e7f
+runtime.gcenable.func1()
+	/usr/local/go/src/runtime/mgc.go:200 +0x25 fp=0xc00004d7e0 sp=0xc00004d7c8 pc=0x10001bfc5
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc00004d7e8 sp=0xc00004d7e0 pc=0x10006e3a1
+created by runtime.gcenable in goroutine 1
+	/usr/local/go/src/runtime/mgc.go:200 +0x66
+
+goroutine 4 [GC scavenge wait]:
+runtime.gopark(0x12f84a4?, 0x1cc68f7?, 0x0?, 0x0?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc00004df70 sp=0xc00004df50 pc=0x10003bf6e
+runtime.goparkunlock(...)
+	/usr/local/go/src/runtime/proc.go:404
+runtime.(*scavengerState).park(0x10040edc0)
+	/usr/local/go/src/runtime/mgcscavenge.go:425 +0x49 fp=0xc00004dfa0 sp=0xc00004df70 pc=0x1000246c9
+runtime.bgscavenge(0x0?)
+	/usr/local/go/src/runtime/mgcscavenge.go:658 +0x59 fp=0xc00004dfc8 sp=0xc00004dfa0 pc=0x100024c79
+runtime.gcenable.func2()
+	/usr/local/go/src/runtime/mgc.go:201 +0x25 fp=0xc00004dfe0 sp=0xc00004dfc8 pc=0x10001bf65
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc00004dfe8 sp=0xc00004dfe0 pc=0x10006e3a1
+created by runtime.gcenable in goroutine 1
+	/usr/local/go/src/runtime/mgc.go:201 +0xa5
+
+goroutine 18 [finalizer wait, 10 minutes]:
+runtime.gopark(0x10023ec00?, 0x10003d101?, 0x0?, 0x0?, 0x1000440c5?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc00004c628 sp=0xc00004c608 pc=0x10003bf6e
+runtime.runfinq()
+	/usr/local/go/src/runtime/mfinal.go:193 +0x107 fp=0xc00004c7e0 sp=0xc00004c628 pc=0x10001b047
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc00004c7e8 sp=0xc00004c7e0 pc=0x10006e3a1
+created by runtime.createfing in goroutine 1
+	/usr/local/go/src/runtime/mfinal.go:163 +0x3d
+
+goroutine 19 [chan receive, 10 minutes]:
+runtime.gopark(0xc00005c978?, 0x10000f845?, 0x20?, 0x80?, 0x10?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc00005c910 sp=0xc00005c8f0 pc=0x10003bf6e
+runtime.chanrecv(0xc0000240c0, 0x0, 0x1)
+	/usr/local/go/src/runtime/chan.go:583 +0x3cd fp=0xc00005c988 sp=0xc00005c910 pc=0x100008e4d
+runtime.chanrecv1(0x100023bfc?, 0x10043e8e0?)
+	/usr/local/go/src/runtime/chan.go:442 +0x12 fp=0xc00005c9b0 sp=0xc00005c988 pc=0x100008a52
+testing.(*B).run1(0xc000018780)
+	/usr/local/go/src/testing/benchmark.go:235 +0xa6 fp=0xc00005caa0 sp=0xc00005c9b0 pc=0x1000d7d46
+testing.(*B).Run(0xc000018500, {0x100242ba2?, 0x656cee9a?}, 0x10026b8b8)
+	/usr/local/go/src/testing/benchmark.go:700 +0x497 fp=0xc00005cba0 sp=0xc00005caa0 pc=0x1000da897
+testing.runBenchmarks.func1(0xc000018500?)
+	/usr/local/go/src/testing/benchmark.go:561 +0x3e fp=0xc00005cbf0 sp=0xc00005cba0 pc=0x1000d999e
+testing.(*B).runN(0xc000018500, 0x1)
+	/usr/local/go/src/testing/benchmark.go:193 +0x102 fp=0xc00005cc68 sp=0xc00005cbf0 pc=0x1000d7b22
+testing.runBenchmarks({0x100246d97, 0x18}, 0x0?, {0x100404020, 0x1, 0x0?})
+	/usr/local/go/src/testing/benchmark.go:570 +0x614 fp=0xc00005cd68 sp=0xc00005cc68 pc=0x1000d98d4
+testing.(*M).Run(0xc00012a960)
+	/usr/local/go/src/testing/testing.go:1941 +0x985 fp=0xc00005cfb0 sp=0xc00005cd68 pc=0x1000e5625
+uk.ac.bris.cs/gameoflife.TestMain.func1()
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/sdl_test.go:28 +0x25 fp=0xc00005cfe0 sp=0xc00005cfb0 pc=0x1001d00e5
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc00005cfe8 sp=0xc00005cfe0 pc=0x10006e3a1
+created by uk.ac.bris.cs/gameoflife.TestMain in goroutine 1
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/sdl_test.go:27 +0x172
+
+goroutine 5 [GC worker (idle), 10 minutes]:
+runtime.gopark(0x0?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc000048750 sp=0xc000048730 pc=0x10003bf6e
+runtime.gcBgMarkWorker()
+	/usr/local/go/src/runtime/mgc.go:1293 +0xe5 fp=0xc0000487e0 sp=0xc000048750 pc=0x10001db45
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc0000487e8 sp=0xc0000487e0 pc=0x10006e3a1
+created by runtime.gcBgMarkStartWorkers in goroutine 19
+	/usr/local/go/src/runtime/mgc.go:1217 +0x1c
+
+goroutine 34 [GC worker (idle)]:
+runtime.gopark(0x79b6aa647d34?, 0x0?, 0x0?, 0x0?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc000214750 sp=0xc000214730 pc=0x10003bf6e
+runtime.gcBgMarkWorker()
+	/usr/local/go/src/runtime/mgc.go:1293 +0xe5 fp=0xc0002147e0 sp=0xc000214750 pc=0x10001db45
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc0002147e8 sp=0xc0002147e0 pc=0x10006e3a1
+created by runtime.gcBgMarkStartWorkers in goroutine 19
+	/usr/local/go/src/runtime/mgc.go:1217 +0x1c
+
+goroutine 50 [GC worker (idle)]:
+runtime.gopark(0x10043e8e0?, 0x1?, 0x79?, 0xa0?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc000210750 sp=0xc000210730 pc=0x10003bf6e
+runtime.gcBgMarkWorker()
+	/usr/local/go/src/runtime/mgc.go:1293 +0xe5 fp=0xc0002107e0 sp=0xc000210750 pc=0x10001db45
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc0002107e8 sp=0xc0002107e0 pc=0x10006e3a1
+created by runtime.gcBgMarkStartWorkers in goroutine 19
+	/usr/local/go/src/runtime/mgc.go:1217 +0x1c
+
+goroutine 51 [GC worker (idle)]:
+runtime.gopark(0x79b8e7c9536a?, 0x3?, 0xc7?, 0x21?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc000210f50 sp=0xc000210f30 pc=0x10003bf6e
+runtime.gcBgMarkWorker()
+	/usr/local/go/src/runtime/mgc.go:1293 +0xe5 fp=0xc000210fe0 sp=0xc000210f50 pc=0x10001db45
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc000210fe8 sp=0xc000210fe0 pc=0x10006e3a1
+created by runtime.gcBgMarkStartWorkers in goroutine 19
+	/usr/local/go/src/runtime/mgc.go:1217 +0x1c
+
+goroutine 52 [GC worker (idle)]:
+runtime.gopark(0x79b8e7c9526a?, 0x1?, 0x94?, 0x78?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc000211750 sp=0xc000211730 pc=0x10003bf6e
+runtime.gcBgMarkWorker()
+	/usr/local/go/src/runtime/mgc.go:1293 +0xe5 fp=0xc0002117e0 sp=0xc000211750 pc=0x10001db45
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc0002117e8 sp=0xc0002117e0 pc=0x10006e3a1
+created by runtime.gcBgMarkStartWorkers in goroutine 19
+	/usr/local/go/src/runtime/mgc.go:1217 +0x1c
+
+goroutine 35 [GC worker (idle)]:
+runtime.gopark(0x79b8e7c62ea0?, 0x3?, 0x5e?, 0xb?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc000214f50 sp=0xc000214f30 pc=0x10003bf6e
+runtime.gcBgMarkWorker()
+	/usr/local/go/src/runtime/mgc.go:1293 +0xe5 fp=0xc000214fe0 sp=0xc000214f50 pc=0x10001db45
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc000214fe8 sp=0xc000214fe0 pc=0x10006e3a1
+created by runtime.gcBgMarkStartWorkers in goroutine 19
+	/usr/local/go/src/runtime/mgc.go:1217 +0x1c
+
+goroutine 6 [GC worker (idle)]:
+runtime.gopark(0x79b8e54c0aca?, 0x3?, 0xfa?, 0x1f?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc00004e750 sp=0xc00004e730 pc=0x10003bf6e
+runtime.gcBgMarkWorker()
+	/usr/local/go/src/runtime/mgc.go:1293 +0xe5 fp=0xc00004e7e0 sp=0xc00004e750 pc=0x10001db45
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc00004e7e8 sp=0xc00004e7e0 pc=0x10006e3a1
+created by runtime.gcBgMarkStartWorkers in goroutine 19
+	/usr/local/go/src/runtime/mgc.go:1217 +0x1c
+
+goroutine 66 [GC worker (idle)]:
+runtime.gopark(0x79b6aa647dae?, 0xc000280020?, 0x1a?, 0x14?, 0x0?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc000288750 sp=0xc000288730 pc=0x10003bf6e
+runtime.gcBgMarkWorker()
+	/usr/local/go/src/runtime/mgc.go:1293 +0xe5 fp=0xc0002887e0 sp=0xc000288750 pc=0x10001db45
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc0002887e8 sp=0xc0002887e0 pc=0x10006e3a1
+created by runtime.gcBgMarkStartWorkers in goroutine 19
+	/usr/local/go/src/runtime/mgc.go:1217 +0x1c
+
+goroutine 53 [chan receive, 5 minutes]:
+runtime.gopark(0xc00009dc68?, 0x10000f845?, 0x60?, 0x1?, 0x10?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc00005dc00 sp=0xc00005dbe0 pc=0x10003bf6e
+runtime.chanrecv(0xc000024420, 0x0, 0x1)
+	/usr/local/go/src/runtime/chan.go:583 +0x3cd fp=0xc00005dc78 sp=0xc00005dc00 pc=0x100008e4d
+runtime.chanrecv1(0x100023bfc?, 0x10043e8e0?)
+	/usr/local/go/src/runtime/chan.go:442 +0x12 fp=0xc00005dca0 sp=0xc00005dc78 pc=0x100008a52
+testing.(*B).run1(0xc000018c80)
+	/usr/local/go/src/testing/benchmark.go:235 +0xa6 fp=0xc00005dd90 sp=0xc00005dca0 pc=0x1000d7d46
+testing.(*B).Run(0xc000018780, {0xc000014200?, 0xc00009ded8?}, 0xc0001441e0)
+	/usr/local/go/src/testing/benchmark.go:700 +0x497 fp=0xc00005de90 sp=0xc00005dd90 pc=0x1000da897
+uk.ac.bris.cs/gameoflife.BenchmarkGOL(0xc000018780?)
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/benchmark_test.go:31 +0x14f fp=0xc00005df28 sp=0xc00005de90 pc=0x1001cdb4f
+testing.(*B).runN(0xc000018780, 0x1)
+	/usr/local/go/src/testing/benchmark.go:193 +0x102 fp=0xc00005dfa0 sp=0xc00005df28 pc=0x1000d7b22
+testing.(*B).run1.func1()
+	/usr/local/go/src/testing/benchmark.go:233 +0x4e fp=0xc00005dfe0 sp=0xc00005dfa0 pc=0x1000d81ae
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc00005dfe8 sp=0xc00005dfe0 pc=0x10006e3a1
+created by testing.(*B).run1 in goroutine 19
+	/usr/local/go/src/testing/benchmark.go:226 +0x90
+
+goroutine 68 [chan receive]:
+runtime.gopark(0xc0000783c0?, 0xc000078360?, 0xe?, 0x17?, 0xc000213680?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc000213628 sp=0xc000213608 pc=0x10003bf6e
+runtime.chanrecv(0xc000024120, 0xc000213708, 0x1)
+	/usr/local/go/src/runtime/chan.go:583 +0x3cd fp=0xc0002136a0 sp=0xc000213628 pc=0x100008e4d
+runtime.chanrecv2(0x10006b4b6?, 0x0?)
+	/usr/local/go/src/runtime/chan.go:447 +0x12 fp=0xc0002136c8 sp=0xc0002136a0 pc=0x100008a72
+uk.ac.bris.cs/gameoflife.BenchmarkGOL.func1(0xc000018c80)
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/benchmark_test.go:35 +0x10d fp=0xc000213728 sp=0xc0002136c8 pc=0x1001cdcad
+testing.(*B).runN(0xc000018c80, 0x1)
+	/usr/local/go/src/testing/benchmark.go:193 +0x102 fp=0xc0002137a0 sp=0xc000213728 pc=0x1000d7b22
+testing.(*B).run1.func1()
+	/usr/local/go/src/testing/benchmark.go:233 +0x4e fp=0xc0002137e0 sp=0xc0002137a0 pc=0x1000d81ae
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc0002137e8 sp=0xc0002137e0 pc=0x10006e3a1
+created by testing.(*B).run1 in goroutine 53
+	/usr/local/go/src/testing/benchmark.go:226 +0x90
+
+goroutine 9 [chan receive, 5 minutes]:
+runtime.gopark(0xc000136720?, 0xc000078300?, 0xd?, 0x0?, 0xc000061e88?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc000061e30 sp=0xc000061e10 pc=0x10003bf6e
+runtime.chanrecv(0xc0000241e0, 0xc000061ee7, 0x1)
+	/usr/local/go/src/runtime/chan.go:583 +0x3cd fp=0xc000061ea8 sp=0xc000061e30 pc=0x100008e4d
+runtime.chanrecv2(0xc000061ee8?, 0x0?)
+	/usr/local/go/src/runtime/chan.go:447 +0x12 fp=0xc000061ed0 sp=0xc000061ea8 pc=0x100008a72
+uk.ac.bris.cs/gameoflife/gol.startIo({0x0?, 0x0?, 0x0?, 0x0?}, {0xc0000241e0, 0xc000024240, 0xc0000242a0, 0xc000024300, 0xc000024360})
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/gol/io.go:138 +0xf1 fp=0xc000061f88 sp=0xc000061ed0 pc=0x1001c6e31
+uk.ac.bris.cs/gameoflife/gol.Run.func1()
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/gol/gol.go:29 +0x45 fp=0xc000061fe0 sp=0xc000061f88 pc=0x1001c6325
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc000061fe8 sp=0xc000061fe0 pc=0x10006e3a1
+created by uk.ac.bris.cs/gameoflife/gol.Run in goroutine 8
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/gol/gol.go:29 +0x1d6
+
+goroutine 54 [chan send]:
+runtime.gopark(0x1002a46f0?, 0xc0000783c0?, 0x4?, 0x0?, 0x4?)
+	/usr/local/go/src/runtime/proc.go:398 +0xce fp=0xc004d8fc50 sp=0xc004d8fc30 pc=0x10003bf6e
+runtime.chansend(0xc000024180, 0x1002a4550, 0x1, 0x11?)
+	/usr/local/go/src/runtime/chan.go:259 +0x3a5 fp=0xc004d8fcc0 sp=0xc004d8fc50 pc=0x1000080e5
+runtime.chansend1(0xc000024120?, 0xc000024180?)
+	/usr/local/go/src/runtime/chan.go:145 +0x17 fp=0xc004d8fcf0 sp=0xc004d8fcc0 pc=0x100007d37
+uk.ac.bris.cs/gameoflife/gol.distributor({0x0?, 0x0?, 0x0?, 0x0?}, {0xc000024120, 0xc000024180, 0xc000024480, 0xc0000244e0, 0xc000024540, 0xc0000245a0, ...})
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/gol/distributor.go:162 +0x331 fp=0xc004d8fe60 sp=0xc004d8fcf0 pc=0x1001c59d1
+uk.ac.bris.cs/gameoflife/gol.Run({0x0?, 0x0?, 0x0?, 0x0?}, 0xc000024120, 0x0)
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/gol/gol.go:40 +0x2b3 fp=0xc004d8ffa0 sp=0xc004d8fe60 pc=0x1001c6273
+uk.ac.bris.cs/gameoflife.BenchmarkGOL.func1.1()
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/benchmark_test.go:34 +0x33 fp=0xc004d8ffe0 sp=0xc004d8ffa0 pc=0x1001cdd13
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc004d8ffe8 sp=0xc004d8ffe0 pc=0x10006e3a1
+created by uk.ac.bris.cs/gameoflife.BenchmarkGOL.func1 in goroutine 68
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/benchmark_test.go:34 +0xea
+
+goroutine 55 [runnable]:
+syscall.syscall(0x100092c3c?, 0xc00015d740?, 0x80000000000?, 0x7ffff80000000000?)
+	/usr/local/go/src/runtime/sys_darwin.go:23 +0x70 fp=0xc004d90c80 sp=0xc004d90bf0 pc=0x10006ae10
+syscall.write(0xc0000785a0?, {0xc004d90e0e?, 0xc00015d140?, 0xc00015d480?})
+	/usr/local/go/src/syscall/zsyscall_darwin_amd64.go:1673 +0x45 fp=0xc004d90cc0 sp=0xc004d90c80 pc=0x100079145
+syscall.Write(...)
+	/usr/local/go/src/syscall/syscall_unix.go:209
+internal/poll.ignoringEINTRIO(...)
+	/usr/local/go/src/internal/poll/fd_unix.go:736
+internal/poll.(*FD).Write(0xc0000785a0, {0xc004d90e0e, 0x1, 0x1})
+	/usr/local/go/src/internal/poll/fd_unix.go:380 +0x35f fp=0xc004d90d70 sp=0xc004d90cc0 pc=0x100093edf
+os.(*File).write(...)
+	/usr/local/go/src/os/file_posix.go:46
+os.(*File).Write(0xc000122078, {0xc004d90e0e?, 0x1, 0x1?})
+	/usr/local/go/src/os/file.go:183 +0x51 fp=0xc004d90dd0 sp=0xc004d90d70 pc=0x100095611
+uk.ac.bris.cs/gameoflife/gol.(*ioState).writePgmImage(0xc004d90ee8)
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/gol/io.go:78 +0x4ef fp=0xc004d90ed0 sp=0xc004d90dd0 pc=0x1001c684f
+uk.ac.bris.cs/gameoflife/gol.startIo({0x0?, 0x0?, 0x0?, 0x0?}, {0xc000024180, 0xc000024480, 0xc0000244e0, 0xc000024540, 0xc0000245a0})
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/gol/io.go:143 +0x131 fp=0xc004d90f88 sp=0xc004d90ed0 pc=0x1001c6e71
+uk.ac.bris.cs/gameoflife/gol.Run.func1()
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/gol/gol.go:29 +0x45 fp=0xc004d90fe0 sp=0xc004d90f88 pc=0x1001c6325
+runtime.goexit()
+	/usr/local/go/src/runtime/asm_amd64.s:1650 +0x1 fp=0xc004d90fe8 sp=0xc004d90fe0 pc=0x10006e3a1
+created by uk.ac.bris.cs/gameoflife/gol.Run in goroutine 54
+	/Users/damianstone/documents/code/golang/game-of-life-distributed/gol/gol.go:29 +0x1d6
+
+rax    0x1004cb000
+rbx    0x60000350c300
+rcx    0x120a8
+rdx    0x0
+rdi    0x1004cc000
+rsi    0x10
+rbp    0x7ff7bfefef70
+rsp    0x7ff7bfefeec8
+r8     0x15cfbc
+r9     0x1
+r10    0x1
+r11    0x60000000b0e0
+r12    0x0
+r13    0x1
+r14    0x0
+r15    0x600003b2d2b0
+rip    0x7ff81abe3c6f
+rflags 0x202
+cs     0x2b
+fs     0x0
+gs     0x0
+*** Test killed with quit: ran too long (11m0s).
+exit status 2
+FAIL	uk.ac.bris.cs/gameoflife	660.140s
