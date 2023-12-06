@@ -191,12 +191,6 @@ func (d *Distributor) HandleFlipCells(request schema.FlipRequest, response *sche
 	return err
 }
 
-func (d *Distributor) CloseNode(request schema.BlankRequest, response *schema.Response) (err error) {
-	fmt.Println("Closing distributor...")
-	os.Exit(0)
-	return err
-}
-
 // distributor divides the work between workers and interacts with other goroutines.
 func distributor(p Params, c distributorChannels) {
 	channels = c
@@ -223,6 +217,7 @@ func distributor(p Params, c distributorChannels) {
 	defer listener.Close()
 	fmt.Println("Distributor running on port: ", pAddr)
 
+	// allow the program to continue running while waiting for connections
 	go rpc.Accept(listener)
 
 	initGame(p, c)

@@ -26,8 +26,6 @@ type Broker struct {
 }
 
 func callDistributor(updatedWorld [][]uint8) {
-
-	// TODO: send old world and updated world to client before incramenting turn
 	client, nodeErr := rpc.Dial("tcp", "127.0.0.1:8020")
 	// client, nodeErr := rpc.Dial("tcp", "13.40.158.33:8020")
 	if nodeErr != nil {
@@ -61,7 +59,7 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 	world = request.World
 	totalTurns = request.Params.Turns
 	nodeAddresses := b.nodeAddresses
-	// numberNodes := request.Params.Threads
+	// numberNodes := request.Params.Threads // for testing purposes
 	numberNodes := len(nodeAddresses)
 
 	workerHeight := len(world) / numberNodes
@@ -128,16 +126,16 @@ func (b *Broker) GetCurrentState(request schema.Request, response *schema.Curren
 }
 
 func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentStateResponse) (err error) {
-	mutex.Lock()
-	defer mutex.Unlock()
 	switch string(request.Key) {
 	case "q":
 		*response = schema.CurrentStateResponse{
 			CurrentWorld: world,
 			Turn:         turn,
 		}
+		mutex.Lock()
 		totalTurns = 0
 		world = [][]uint8{}
+		mutex.Unlock()
 	case "k":
 
 		for i := 0; i < len(b.nodeAddresses); i++ {
