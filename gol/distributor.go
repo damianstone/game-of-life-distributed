@@ -86,6 +86,8 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				writeImage(p, c, keyResponse.Turn, keyResponse.CurrentWorld)
 				c.events <- StateChange{CompletedTurns: keyResponse.Turn, NewState: Quitting}
 				close(c.events)
+
+				time.Sleep(500 * time.Millisecond)
 				os.Exit(0)
 			case "k":
 				// NOTE: get the current state
@@ -106,6 +108,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				done := client.Go(schema.HandleKey, shutDownRequest, shutDownResponse, nil)
 				<-done.Done
 
+				time.Sleep(500 * time.Millisecond)
 				os.Exit(0)
 			case "p":
 				// NOTE: print he current turn and pause the game
