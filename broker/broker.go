@@ -150,7 +150,9 @@ func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentSt
 			client.Close()
 		}
 
+		mutex.Lock()
 		shutdownFlag = true
+		mutex.Unlock()
 
 	case "p":
 		pauseFlag = !pauseFlag

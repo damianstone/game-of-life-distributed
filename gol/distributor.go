@@ -50,6 +50,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 	for {
 		select {
 		case <-done.Done:
+			ticker.Stop()
 			return response.World
 		case <-ticker.C:
 			request := schema.BlankRequest{}
