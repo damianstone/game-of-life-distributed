@@ -30,7 +30,6 @@ func callDistributor(updatedWorld [][]uint8) {
 	// client, nodeErr := rpc.Dial("tcp", "13.40.158.33:8020")
 	if nodeErr != nil {
 		fmt.Println("Error when connecting to client: ", nodeErr)
-		// NOTE: change
 		return
 	}
 	client.Call(schema.HandleFlipCells, schema.FlipRequest{OldWorld: world, NewWorld: updatedWorld, Turn: turn}, schema.Response{})
@@ -99,7 +98,6 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 		}
 
 		mutex.Lock()
-		// NOTE: change
 		callDistributor(updatedWorld)
 		world = updatedWorld
 		turn++
@@ -127,8 +125,6 @@ func (b *Broker) GetCurrentState(request schema.Request, response *schema.Curren
 }
 
 func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentStateResponse) (err error) {
-	mutex.Lock()
-	defer mutex.Unlock()
 	switch string(request.Key) {
 	case "q":
 		*response = schema.CurrentStateResponse{
@@ -145,7 +141,6 @@ func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentSt
 		}()
 		<-responseChan
 	case "k":
-		// NOTE: change
 		for i := 0; i < len(b.nodeAddresses); i++ {
 			nAddress := b.nodeAddresses[i]
 			client, nodeErr := rpc.Dial("tcp", nAddress)
@@ -158,7 +153,9 @@ func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentSt
 			client.Close()
 		}
 
+		mutex.Lock()
 		shutdownFlag = true
+		mutex.Unlock()
 
 	case "p":
 		pauseFlag = !pauseFlag
@@ -176,24 +173,24 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	// Locally
-	// broker := Broker{
-	// 	nodeAddresses: []string{
-	// 		"127.0.0.1:8050",
-	// 		"127.0.0.1:8051",
-	// 		"127.0.0.1:8052",
-	// 		"127.0.0.1:8053",
-	// 	},
-	// }
-
-	// AWS
 	broker := Broker{
 		nodeAddresses: []string{
-			"18.132.63.211:8050",
-			"3.10.5.121:8051",
-			"35.177.62.130:8052",
-			"35.178.190.148:8053",
+			"127.0.0.1:8050",
+			"127.0.0.1:8051",
+			"127.0.0.1:8052",
+			"127.0.0.1:8053",
 		},
 	}
+
+	// AWS
+	// broker := Broker{
+	// 	nodeAddresses: []string{
+	// 		"18.132.63.211:8050",
+	// 		"3.10.5.121:8051",
+	// 		"35.177.62.130:8052",
+	// 		"35.178.190.148:8053",
+	// 	},
+	// }
 
 	// register the broker
 	err := rpc.Register(&broker)
