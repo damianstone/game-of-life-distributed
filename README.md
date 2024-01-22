@@ -1,24 +1,4 @@
-# CSA Coursework: Game of Life
-
-**[Video Walkthrough of Parallel Component (note that submission date is incorrect in the video!) (skip to 04:20 to skip IntelliJ install and project opening steps)](https://web.microsoftstream.com/video/990e039f-4bc1-4b22-b0b1-ae895ee07163)** Please note that the rest of assignment will be introduced after reading week
-
-**[Alternative perspective on interfaces in Go done by George](https://web.microsoftstream.com/video/30a6b464-aa7a-4e56-abf8-3534275440e3)**
-
-
-**[Video Walkthrough of Distributed Component](https://web.microsoftstream.com/video/b4f92750-6f76-4f51-8d37-93413c3cb088)** 
-
-<!-- **[Coursework Q&A Recording](https://web.microsoftstream.com/video/ab833321-3a78-4c83-b87e-16ce1b5c244f)** -->
-
-<!---
-**[Video Walkthrough of Report Component](https://web.microsoftstream.com/video/b5e8cf95-981c-4c26-8522-cc0210293d51)** Also see this document which accompanies the video: **[All report guidance with links collated into single document](https://github.com/UoB-CSA/gol-skeleton/blob/master/content/ReporGuidanceCollated.md)**-->
-
-This is the Computer Systems A summative coursework. The coursework is worth 80% of the unit mark. It is to be completed in your programming pairs. You must report any change to your pairing to the unit director *before* starting your assignment. It runs over 4 weeks (5 weeks including the reading week) and the deadline for submitting all your work is **30 November 13:00**.
-
-Talk to each other regularly and make sure you manage your team well. Let us know about issues before they grow to affect your team’s performance. It is important to carefully manage your time for this assignment. Do not spend hours trying to debug on your own; use pair programming, seek help from our teaching assistants during scheduled labs and ask questions on Teams.
-
-**Do not plagiarise.** Both team members should understand all code developed in detail. 
-
-## Task Overview
+# Conway's Game of Life
 
 ### Introduction
 
@@ -30,37 +10,6 @@ The British mathematician John Horton Conway devised a cellular automaton named 
 - any dead cell with exactly three live neighbours becomes alive
 
 Consider the image to be on a closed domain (pixels on the top row are connected to pixels at the bottom row, pixels on the right are connected to pixels on the left and vice versa). A user can only interact with the Game of Life by creating an initial configuration and observing how it evolves. Note that evolving such complex, deterministic systems is an important application of scientific computing, often making use of parallel architectures and concurrent programs running on large computing farms.
-
-Your task is to design and implement programs which simulate the Game of Life on an image matrix.
-
-### Skeleton Code
-
-To help you along, you are given a simple skeleton project. The skeleton includes tests and an SDL-based visualiser. All parts of the skeleton are commented. All the code has been written in Go. You will not be required to write any C code. If you have any questions about the skeleton please ask a TA for help.
-
-You **must not** modify any of the files ending in `_test.go`. We will be using these tests to judge the correctness of your implementation.
-
-The skeleton code uses SDL. This is a basic graphics library which you already used in Imperative Programming unit. To install the library follow the following instructions:
-
-- **Linux Lab Machines** - SDL should already be installed and working.
-- **Personal Ubuntu PCs** - `sudo apt install libsdl2-dev`
-- **MacOS** - `brew install sdl2` or use the official [`.dmg` installer](https://www.libsdl.org/download-2.0.php).
-- **Windows** - Use Ubuntu with WSL2. See our [guide](https://github.com/UoB-CSA/setup-guides/blob/master/go-install/windows.md).
-- **Other** - Consult the [official documentation](https://wiki.libsdl.org/Installation).
-
-### Submission
-
-The coursework requires two independent implementations. You will be required to submit **both** implementations (assuming both were attempted). Every student is required to upload their full work to Blackboard. There will be three separate submissions points on Blackboard - one for the report and two for each implementation.
-
-- For the report, you must submit a single file called `report.pdf`. [report submission point - NOT YET AVAILABLE](#)
-- For the parallel implementation, you must submit a single zip file called `parallel.zip`. It must contain all the code required to compile and run the program. [parallel submission point - NOT YET AVAILABLE](#)
-- For the distributed implementation, you must submit a single zip file called `distributed.zip`. It must contain all the code required to compile and run the program. [distributed submission point - NOT YET AVAILABLE](#)
-- If you have multiple versions, only submit the ones you wish us to check for correctness (one zip for parallel and one for distributed). Other versions may be shared via OneDrive with Sion, Pui and Michael.
-
-Submitting different filenames or file formats (e.g. `.docx`, `.tex`, `.7z` or `.rar`) will result in a mark penalty.
-
-You should be using `git` for version control, however, please don't include your `.git` directory in your submission. You can generate a correct archive using the command `git archive -o [FILENAME].zip HEAD`. 
-
-Make sure you submit it early (not last minute!) to avoid upload problems. **Each team member has to upload an identical copy of the team's work.**
 
 ## Stage 1 - Parallel Implementation
 
@@ -120,23 +69,6 @@ Also, implement the following control rules. Note that the goroutine running SDL
 
 Test the visualisation and control rules by running `go run .`
 
-### Success Criteria
-
-- Pass all test cases under `TestGol`, `TestAlive` and `TestPgm`.
-- Use the correct number of workers as requested in `gol.Params`.
-- Display the live progress of the game using SDL.
-- Ensure that all keyboard control rules work correctly.
-- Use benchmarks to measure the performance of your parallel program.
-- The implementation must scale well with the number of worker threads.
-- The implementation must be free of deadlocks and race conditions.
-
-### In your Report
-
-- Discuss the goroutines you used and how they work together.
-- Explain and analyse the benchmark results obtained. You may want to consider using graphs to visualise your benchmarks.
-- Analyse how your implementation scales as more workers are added.
-- Briefly discuss your methodology for acquiring any results or measurements.
-
 
 ## Stage 2 - Distributed Implementation
 
@@ -146,19 +78,6 @@ and communicate state between machines over a network.  Below is a series of
 suggested steps for approaching the problem, but you are *not* required to
 follow this sequence, and can jump straight to implementing the more advanced
 versions of the system if you feel confident about it.
-
-<!---
-**IMPORTANT: You need to modify [the count_test](https://github.com/UoB-CSA/gol-skeleton/blob/master/count_test.go) when testing your distributed implementation by replacing lines 41-53 with:**
-
-```
-for event := range events {
-    switch e := event.(type) {
-    case gol.AliveCellsCount:
-        var expected int
-```
-
-There is a modified version of the test file available [here](https://seis.bristol.ac.uk/~sh1670/dist_count_test.go)
--->
 
 ### Step 1
 
@@ -202,18 +121,6 @@ Finally, the local controller should be able to manage the behaviour of the GoL 
 
 Test the control rules by running `go run .`.
 
-### Step 5 - New for 22 - go straight to Step 6
-
-![Step 5](content/cw_diagrams-Distributed_5.png)
-
-Split up the computation of the GoL board state (from the GoL server) across
-multiple worker machines (AWS nodes).  You will need some means of distributing
-work between multiple AWS machines and gathering results together in one place
-while avoiding any errors in the collected board state.  Try to design your
-solution so it takes advantage of the possible *scalability* of many worker
-machines.
-
-Make sure to keep the communication between nodes as efficient as possible. For example, consider a halo exchange scheme where only the edges are communicated between the nodes.
 
 ### Step 6
 
@@ -238,16 +145,6 @@ communicating.
 - To fully satisfy the criteria your implementation should use multiple AWS nodes efficiently.
 
 *There is __no need__ to display the live progress of the game using SDL. However, you will still need to run a blank SDL window to register the keypresses.*
-
-### In your report
-
-- Discuss the system design and reasons for any decisions made. Consider using a diagram to aid your discussion.
-- Explain what data is sent over the network, when, and why it is necessary.  
-- Discuss how your system might scale with the addition of other distributed
-  components.
-- Briefly discuss your methodology for acquiring any results or measurements.
-- Identify how components of your system disappearing (e.g., broken network
-  connections) might affect the overall system and its results.
 
 ## Extensions
 
@@ -286,47 +183,3 @@ In your report, explain the design of your fault tolerance mechanism. Conduct ex
 Redesign your parallel implementation to use pure memory sharing. Replace *all* channels with traditional synchronisation mechanisms (mutexes, sempahores, condition variables). We recommend first replacing any channels used between the workers and the distributor. Then remove channels linking the distributor with the IO and with SDL. You should still keep them as seperate goroutines. Your solution must be free of deadlocks and race conditions.
 
 Analyse the performance of your new solution and compare it with your previous implementation. Explain any differences observed.
-
------------------------------------------------------------------------
-
-## Mark Scheme
-
-You will receive a mark out of 100 for this coursework.
-
-### Parallel Implementation (35 marks)
-
-20% - Single-threaded implementation.
-
-30% - Parallel implementation implementation with the number of workers hardcoded to a non-1 value.
-
-40% - Parallel Game of Life implementation (see Step 2). The number of threads *cannot* be hardcoded but it may be the case that only some configurations are working (e.g it's only working if the number of threads is a power of 2).
-
-50% - Parallel Game of Life implementation, all configurations working.
-
-Additional marks are available for satisfying further success criteria, up to:
-
-70% - Satisfy *all* success criteria for this stage.
-
-### Distributed Implementation (35 marks)
-
-40% - You must be able to demonstrate a distributed Game of Life implementation. It must be running a single AWS GoL Engine Node that is controlled by a locally running controller (see Step 1).
-
-70% - Satisfy *all* success criteria for this stage.
-
-### Report (30 marks)
-
-You need to submit a CONCISE (**strictly** max 6 pages) report which should cover the following topics:
-
-Functionality and Design: Outline what functionality you have implemented, which problems you have solved with your implementations and how your program is designed to solve the problems efficiently and effectively.
-
-Critical Analysis: Describe the experiments and analysis you carried out. Provide a selection of appropriate results. Keep a history of your implementations and provide benchmark results from various stages. Explain and analyse the benchmark results obtained. Analyse the important factors responsible for the virtues and limitations of your implementations.
-
-Make sure your team member’s names and user names appear on page 1 of the report. **Do not include a cover page.**
-
-## Viva
-
-You will be required to demonstrate your implementations in a viva. This will include running tests as well as showing PGM image output and working keyboard control.
-
-As part of the viva, we will also discuss your report. You should be prepared to discuss and expand on any points mentioned in your report.
-
-
