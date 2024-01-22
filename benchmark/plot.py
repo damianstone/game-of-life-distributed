@@ -1,21 +1,16 @@
 import matplotlib.pyplot as plt
 import re
 
-# 10000 iterations
+
+
+# with SDL
 data = """
-BenchmarkGOL/512x512x10000-1-8         	       1	223952700638 ns/op	68247624 B/op	  181982 allocs/op
-BenchmarkGOL/512x512x10000-2-8         	       1	133581973270 ns/op	41257976 B/op	  111598 allocs/op
-BenchmarkGOL/512x512x10000-3-8         	       1	105894012434 ns/op	33222352 B/op	   90575 allocs/op
-BenchmarkGOL/512x512x10000-4-8         	       1	90681457518 ns/op	34419520 B/op	   93026 allocs/op
+BenchmarkGOL/512x512x1000-1-8         	       1	33888639819 ns/op	1242717048 B/op	 6681899 allocs/op
+BenchmarkGOL/512x512x1000-2-8         	       1	25123140827 ns/op	1239012088 B/op	 6674620 allocs/op
+BenchmarkGOL/512x512x1000-3-8         	       1	23532063906 ns/op	1220313064 B/op	 5656791 allocs/op
+BenchmarkGOL/512x512x1000-4-8         	       1	22929790875 ns/op	1239001872 B/op	 6674591 allocs/op
 """
 
-# 1000 iterations until 8 nodes
-data = """
-BenchmarkGOL/512x512x1000-1-8         	       1	62272204403 ns/op	22102448 B/op	   56665 allocs/op
-BenchmarkGOL/512x512x1000-2-8         	       1	37184262015 ns/op	13340016 B/op	   35788 allocs/op
-BenchmarkGOL/512x512x1000-3-8         	       1	30277619373 ns/op	11440760 B/op	   31332 allocs/op
-BenchmarkGOL/512x512x1000-4-8         	       1	27861971582 ns/op	11061440 B/op	   29605 allocs/op
-"""
 
 # Regular expression pattern to extract relevant data
 pattern = r"BenchmarkGOL/(\d+)x(\d+)x(\d+)-(\d+)-\d+\s+\d+\s+(\d+) ns/op\s+(\d+) B/op\s+(\d+) allocs/op"

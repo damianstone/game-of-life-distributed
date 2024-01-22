@@ -2,6 +2,7 @@ package gol
 
 import (
 	"fmt"
+	"net"
 	"net/rpc"
 	"os"
 	"strconv"
@@ -21,6 +22,14 @@ type distributorChannels struct {
 	ioKeyPress <-chan rune
 }
 
+var (
+	distributorRegistered bool
+	channels              distributorChannels
+	params                Params
+)
+
+type Distributor struct{}
+
 func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint8) [][]uint8 {
 	ticker := time.NewTicker(2 * time.Second)
 	client, _ := rpc.Dial("tcp", "127.0.0.1:8030")
@@ -30,7 +39,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 		World: initialWorld,
 		Params: schema.Params{
 			Turns:       p.Turns,
-			Threads:     p.Threads,
+			Threads:     p.Threads, // just for testing purposes
 			ImageWidth:  p.ImageWidth,
 			ImageHeight: p.ImageHeight,
 		},
@@ -41,6 +50,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 	for {
 		select {
 		case <-done.Done:
+			ticker.Stop()
 			return response.World
 		case <-ticker.C:
 			request := schema.BlankRequest{}
@@ -51,6 +61,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				os.Exit(1)
 			}
 			c.events <- AliveCellsCount{CompletedTurns: response.Turn, CellsCount: response.AliveCellsCount}
+
 		case key := <-c.ioKeyPress:
 			switch string(key) {
 			case "s":
@@ -75,6 +86,8 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				writeImage(p, c, keyResponse.Turn, keyResponse.CurrentWorld)
 				c.events <- StateChange{CompletedTurns: keyResponse.Turn, NewState: Quitting}
 				close(c.events)
+
+				time.Sleep(500 * time.Millisecond)
 				os.Exit(0)
 			case "k":
 				// NOTE: get the current state
@@ -95,6 +108,7 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				done := client.Go(schema.HandleKey, shutDownRequest, shutDownResponse, nil)
 				<-done.Done
 
+				time.Sleep(500 * time.Millisecond)
 				os.Exit(0)
 			case "p":
 				// NOTE: print he current turn and pause the game
@@ -130,14 +144,12 @@ func gameOfLifeController(p Params, c distributorChannels, initialWorld [][]uint
 				fmt.Println("Invalid key")
 			}
 		}
+
 	}
 
 }
 
-// distributor divides the work between workers and interacts with other goroutines.
-func distributor(p Params, c distributorChannels) {
-
-	// TODO: Create a 2D slice to store the world.
+func initGame(p Params, c distributorChannels) {
 	worldSlice := createWorld(p.ImageHeight, p.ImageWidth)
 	initialWorld := getImage(p, c, worldSlice)
 
@@ -150,10 +162,8 @@ func distributor(p Params, c distributorChannels) {
 		}
 	}
 
-	// TODO: Execute all turns of the Game of Life.
 	finalWorld := gameOfLifeController(p, c, initialWorld)
 
-	// TODO: Report the final state using FinalTurnCompleteEvent.
 	aliveCells := calculateAliveCells(finalWorld)
 	c.events <- FinalTurnComplete{CompletedTurns: p.Turns, Alive: aliveCells}
 	writeImage(p, c, p.Turns, finalWorld)
@@ -166,4 +176,53 @@ func distributor(p Params, c distributorChannels) {
 
 	// Close the channel to stop the SDL goroutine gracefully. Removing may cause deadlock.
 	close(c.events)
+}
+
+func (d *Distributor) HandleFlipCells(request schema.FlipRequest, response *schema.Response) (err error) {
+	oldWorld := request.OldWorld
+	newWorld := request.NewWorld
+	turn := request.Turn
+
+	for i := range oldWorld {
+		for j := range oldWorld[i] {
+			if oldWorld[i][j] != newWorld[i][j] {
+				channels.events <- CellFlipped{CompletedTurns: turn, Cell: util.Cell{X: j, Y: i}}
+			}
+		}
+	}
+
+	channels.events <- TurnComplete{CompletedTurns: turn}
+	return err
+}
+
+// distributor divides the work between workers and interacts with other goroutines.
+func distributor(p Params, c distributorChannels) {
+	channels = c
+	params = p
+
+	if !distributorRegistered {
+		err := rpc.Register(&Distributor{})
+		if err != nil {
+			fmt.Println("Error registering distributor: ", err)
+			return
+		}
+		distributorRegistered = true
+	}
+
+	pAddr := "127.0.0.1:8020"
+	// pAddr := "13.40.158.33:8020"
+	listener, err := net.Listen("tcp", pAddr)
+
+	if err != nil {
+		fmt.Println("Error listening: ", err)
+		os.Exit(1)
+	}
+
+	defer listener.Close()
+	fmt.Println("Distributor running on port: ", pAddr)
+
+	// allow the program to continue running while waiting for connections
+	go rpc.Accept(listener)
+
+	initGame(p, c)
 }

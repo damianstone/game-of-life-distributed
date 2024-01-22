@@ -25,6 +25,17 @@ type Broker struct {
 	nodeAddresses []string
 }
 
+func callDistributor(updatedWorld [][]uint8) {
+	client, nodeErr := rpc.Dial("tcp", "127.0.0.1:8020")
+	// client, nodeErr := rpc.Dial("tcp", "13.40.158.33:8020")
+	if nodeErr != nil {
+		fmt.Println("Error when connecting to client: ", nodeErr)
+		return
+	}
+	client.Call(schema.HandleFlipCells, schema.FlipRequest{OldWorld: world, NewWorld: updatedWorld, Turn: turn}, schema.Response{})
+	client.Close()
+}
+
 func callNode(add string, client *rpc.Client, height int, nodeWorld [][]uint8, out chan [][]uint8) {
 	defer client.Close()
 
@@ -48,8 +59,8 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 	world = request.World
 	totalTurns = request.Params.Turns
 	nodeAddresses := b.nodeAddresses
-	numberNodes := request.Params.Threads
-	// numberNodes := len(nodeAddresses)
+	// numberNodes := request.Params.Threads // for testing purposes
+	numberNodes := len(nodeAddresses)
 
 	workerHeight := len(world) / numberNodes
 	remaining := len(world) % numberNodes
@@ -87,6 +98,7 @@ func (b *Broker) HandleBroker(request schema.Request, response *schema.Response)
 		}
 
 		mutex.Lock()
+		callDistributor(updatedWorld)
 		world = updatedWorld
 		turn++
 		mutex.Unlock()
@@ -113,18 +125,22 @@ func (b *Broker) GetCurrentState(request schema.Request, response *schema.Curren
 }
 
 func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentStateResponse) (err error) {
-	mutex.Lock()
-	defer mutex.Unlock()
 	switch string(request.Key) {
 	case "q":
 		*response = schema.CurrentStateResponse{
 			CurrentWorld: world,
 			Turn:         turn,
 		}
-		totalTurns = 0
-		world = [][]uint8{}
+		responseChan := make(chan struct{})
+		go func() {
+			err := b.HandleBroker(schema.Request{}, &schema.Response{})
+			if err != nil {
+				fmt.Println("Error calling distributor: ", err)
+			}
+			responseChan <- struct{}{}
+		}()
+		<-responseChan
 	case "k":
-
 		for i := 0; i < len(b.nodeAddresses); i++ {
 			nAddress := b.nodeAddresses[i]
 			client, nodeErr := rpc.Dial("tcp", nAddress)
@@ -137,7 +153,9 @@ func (b *Broker) HandleKey(request schema.KeyRequest, response *schema.CurrentSt
 			client.Close()
 		}
 
+		mutex.Lock()
 		shutdownFlag = true
+		mutex.Unlock()
 
 	case "p":
 		pauseFlag = !pauseFlag
@@ -189,7 +207,7 @@ func main() {
 	defer func(listener net.Listener) {
 		err := listener.Close()
 		if err != nil {
-
+			fmt.Println("Error closing listener: ", err)
 		}
 	}(listener)
 
